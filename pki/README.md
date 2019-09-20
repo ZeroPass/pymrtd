@@ -1,2 +1,2 @@
-This module is using `cryptography` python library for all necessary cryptographic operations (signature verification).
-In order for this module to work correctly the `cryptography` library should be patched by commenting out two lines in [_EllipticCurvePublicKey](https://github.com/pyca/cryptography/blob/e1f7e0978231f73382f95b864200fdeca7d37bb7/src/cryptography/hazmat/backends/openssl/ec.py#L236-L237) class.
+This module is using [`cryptography`](https://github.com/pyca/cryptography) python library for all necessary cryptographic operations (signature verification).
+In order for this module to work correctly the [`cryptography`](https://github.com/pyca/cryptography) library must be patched by commenting out two lines in [_EllipticCurvePublicKey](https://github.com/pyca/cryptography/blob/e1f7e0978231f73382f95b864200fdeca7d37bb7/src/cryptography/hazmat/backends/openssl/ec.py#L236-L237) class.
