@@ -1,5 +1,5 @@
 from asn1crypto import x509
-from cert_utils import verify_cert_sig
+from .cert_utils import verify_cert_sig
 
 class CertificateVerificationError(Exception):
     pass
