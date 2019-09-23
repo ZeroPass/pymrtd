@@ -55,6 +55,19 @@ class Certificate(x509.Certificate):
             "Missing required extension field '{}'".format(field)
          )
 
+    def _require_extension_value(self, field: str, value):
+        exts = self['tbs_certificate']['extensions']
+        for e in exts:
+            if field in e['extn_id'].native:
+                if e['extn_value'].native == value:
+                    return
+                Certificate._require(False, 
+                    "Extension value invalid! ext='{}' v='{}', req_v=''".format(field, e['extn_value'].native, value)
+                )
+
+        Certificate._require(False, 
+            "Missing required extension field '{}'".format(field)
+        )
 
 
 
@@ -80,3 +93,19 @@ class CscaCertificate(Certificate):
             "Missing field 'keyCertSign' in KeyUsage"
         )
         Certificate._require('crl_sign' in key_usage, "Missing field 'cRLSign' in KeyUsage")
+
+
+
+class MasterListSignerCertificate(Certificate):
+    def verify(self, issuing_cert: x509.Certificate):
+        super().verify(issuing_cert)
+        super()._require_extension_field('authority_key_identifier')
+
+        super()._require_extension_field('key_usage')
+        key_usage = self.key_usage_value.native
+        Certificate._require(
+            'digital_signature' in key_usage,
+            "Missing field 'digitalSignature' in KeyUsage"
+        )
+
+        super()._require_extension_value('extended_key_usage', ['2.23.136.1.1.3']) #icao 9303-p12 p27
