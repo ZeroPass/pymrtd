@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives.serialization import load_der_public_key
 from cryptography import exceptions as cryptography_exceptions
 
 from asn1crypto import x509
+from asn1crypto.algos import SignedDigestAlgorithm
 
 
 _STR_TO_HASH_ALGO = {
@@ -17,11 +18,8 @@ _STR_TO_HASH_ALGO = {
     'sha512': hashes.SHA512(),
 }
 
-def verify_cert_sig(issued_cert: x509.Certificate, issuing_cert: x509.Certificate) -> bool:
-    """
-    Verifies digital signature of issued certificate against issuing certificate's public key.
-    It returns True if verification succeeds, otherwise False.
-    """
+def verify_sig(signing_cert: x509.Certificate, msg_bytes: bytes, sig_bytes: bytes, sig_algo: SignedDigestAlgorithm):
+    hash_algo = _STR_TO_HASH_ALGO[sig_algo.hash_algo]
 
     class Verifier:
         def __init__(self, vf):
@@ -29,9 +27,7 @@ def verify_cert_sig(issued_cert: x509.Certificate, issuing_cert: x509.Certificat
         def verify(self):
             return self._vf()
 
-    def get_rsa_verifier(pub_key: rsa.RSAPublicKey, tbs_cert: x509.TbsCertificate, sig_bytes: bytes):
-        sig_algo  = tbs_cert['signature']
-        hash_algo = _STR_TO_HASH_ALGO[sig_algo.hash_algo]
+    def get_rsa_verifier(pub_key: rsa.RSAPublicKey):
         if sig_algo.signature_algo == 'rsassa_pss':
             sig_algo_params = sig_algo['parameters']
             assert 'mask_gen_algorithm' in sig_algo_params
@@ -46,7 +42,7 @@ def verify_cert_sig(issued_cert: x509.Certificate, issuing_cert: x509.Certificat
             return Verifier(lambda: 
                 pub_key.verify(
                     sig_bytes,
-                    tbs_cert.dump(),
+                    msg_bytes,
                     padding.PSS(
                         mgf = padding.MGF1(mgf1_hash_algo),
                         salt_length = sig_algo_params['salt_length'].native
@@ -55,42 +51,36 @@ def verify_cert_sig(issued_cert: x509.Certificate, issuing_cert: x509.Certificat
             ))
         else:
             return Verifier(lambda: 
-                pub_key.verify(sig_bytes, tbs_cert.dump(), padding.PKCS1v15(), hash_algo)
+                pub_key.verify(sig_bytes, msg_bytes, padding.PKCS1v15(), hash_algo)
             )
 
-    def get_ecdsa_verifier(pub_key: ecc.EllipticCurvePublicKey, tbs_cert: x509.TbsCertificate, sig_bytes: bytes):
-        sig_algo  = tbs_cert['signature']
-        hash_algo = _STR_TO_HASH_ALGO[sig_algo.hash_algo]
+    def get_ecdsa_verifier(pub_key: ecc.EllipticCurvePublicKey):
         return Verifier(lambda: 
-            pub_key.verify(sig_bytes, tbs_cert.dump(), ecc.ECDSA(hash_algo))
+            pub_key.verify(sig_bytes, msg_bytes, ecc.ECDSA(hash_algo))
         )
 
-    def get_eddsa_verifier(pub_key: ed25519.Ed25519PublicKey, tbs_cert: x509.TbsCertificate, sig_bytes: bytes):
+    def get_eddsa_verifier(pub_key: ed25519.Ed25519PublicKey):
         return Verifier(lambda: 
-            pub_key.verify(sig_bytes, tbs_cert.dump())
+            pub_key.verify(sig_bytes, msg_bytes)
         )
 
-    def get_dsa_verifier(pub_key: ecc.EllipticCurvePublicKey, tbs_cert: x509.TbsCertificate, sig_bytes: bytes):
-        sig_algo  = tbs_cert['signature']
-        hash_algo = _STR_TO_HASH_ALGO[sig_algo.hash_algo]
+    def get_dsa_verifier(pub_key: ecc.EllipticCurvePublicKey):
         return Verifier(lambda: 
-            pub_key.verify(sig_bytes, tbs_cert.dump(), hash_algo)
+            pub_key.verify(sig_bytes, msg_bytes, hash_algo)
         )
 
     
     # Get signature verifier
-    tbs_cert       = issued_cert['tbs_certificate']
-    sig_bytes      = issued_cert.signature
-    issuer_pub_key = load_der_public_key(issuing_cert.public_key.dump(), default_backend())
+    issuer_pub_key = load_der_public_key(signing_cert.public_key.dump(), default_backend())
 
     if isinstance(issuer_pub_key, rsa.RSAPublicKey):
-        verifier = get_rsa_verifier(issuer_pub_key, tbs_cert, sig_bytes)
+        verifier = get_rsa_verifier(issuer_pub_key)
     elif isinstance(issuer_pub_key, ecc.EllipticCurvePublicKey):
-        verifier = get_ecdsa_verifier(issuer_pub_key, tbs_cert, sig_bytes)
+        verifier = get_ecdsa_verifier(issuer_pub_key)
     elif isinstance(issuer_pub_key, ed25519.Ed25519PublicKey):
-        verifier = get_eddsa_verifier(issuer_pub_key, tbs_cert, sig_bytes)
+        verifier = get_eddsa_verifier(issuer_pub_key)
     else:
-        verifier = get_dsa_verifier(issuer_pub_key, tbs_cert, sig_bytes)
+        verifier = get_dsa_verifier(issuer_pub_key)
     
     # Verify cert sig
     try:
@@ -98,3 +88,14 @@ def verify_cert_sig(issued_cert: x509.Certificate, issuing_cert: x509.Certificat
     except cryptography_exceptions.InvalidSignature:
         return False
     return True
+
+
+def verify_cert_sig(issued_cert: x509.Certificate, issuing_cert: x509.Certificate) -> bool:
+    """
+    Verifies digital signature of issued certificate against issuing certificate's public key.
+    It returns True if verification succeeds, otherwise False.
+    """
+    tbs_cert  = issued_cert['tbs_certificate']
+    sig_algo  = tbs_cert['signature']
+    sig_bytes = issued_cert.signature
+    return verify_sig(issuing_cert, tbs_cert.dump(), sig_bytes, sig_algo)
