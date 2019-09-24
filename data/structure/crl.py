@@ -5,21 +5,23 @@
     Python Version: 3.6
 '''
 
-from asn1crypto import crl
+from asn1crypto import x509, crl
 from settings import *
 
-class CertificationRevocationList:
+class CertificationRevocationList(crl):
     """Class; object that stores Certificate Revocation List (CRL) and has supporting functions"""
     crlObj = None
     countryName = None
     size = None
 
-    def __init__(self, crl):
+    def __init__(self, crl :crl):
         """With initialization crl needs to be provided"""
         self.crlObj = crl
         self.countryName = crl.issuer.native['country_name']
         self.size = len(crl['tbs_cert_list']['revoked_certificates'])
 
+    def verify(self, issuer: x509.Certificate):
+        """Verify CRL"""
 
     def countryName(self) -> str:
         """Function returns country of CRL issuer """

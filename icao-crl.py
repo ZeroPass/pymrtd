@@ -2,7 +2,7 @@ from ldif3 import LDIFParser
 from asn1crypto import crl, x509, pem
 import re
 
-from data.structure.x509 import CertX509
+from data.structure.DSC import CertX509
 from data.structure.crl import CertificationRevocationList
 
 certificateList = {}
