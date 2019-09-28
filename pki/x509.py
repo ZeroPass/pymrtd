@@ -110,14 +110,20 @@ class CscaCertificate(Certificate):
 
 class MasterListSignerCertificate(Certificate):
     def verify(self, issuing_cert: x509.Certificate):
-        super().verify(issuing_cert)
-        super()._require_extension_field('authority_key_identifier')
+        if self.ca: # Signer certificate is probably CSCA
+                    # We do this check because not all master list issuers follow the specification rules and
+                    # they use CSCA to sign master list instead of separate signer certificate issued by CSCA.
+                    # See for example German master list no. 20190925)
+            CscaCertificate.load(self.dump()).verify(issuing_cert)
+        else:
+            super().verify(issuing_cert)
+            super()._require_extension_field('authority_key_identifier')
 
-        super()._require_extension_field('key_usage')
-        key_usage = self.key_usage_value.native
-        Certificate._require(
-            'digital_signature' in key_usage,
-            "Missing field 'digitalSignature' in KeyUsage"
-        )
+            super()._require_extension_field('key_usage')
+            key_usage = self.key_usage_value.native
+            Certificate._require(
+                'digital_signature' in key_usage,
+                "Missing field 'digitalSignature' in KeyUsage"
+            )
 
-        super()._require_extension_value('extended_key_usage', ['2.23.136.1.1.3']) #icao 9303-p12 p27
+            super()._require_extension_value('extended_key_usage', ['2.23.136.1.1.3']) #icao 9303-p12 p27
