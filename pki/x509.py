@@ -1,10 +1,19 @@
 from asn1crypto import x509
 from .cert_utils import verify_cert_sig
+from datetime import datetime
 
 class CertificateVerificationError(Exception):
     pass
 
 class Certificate(x509.Certificate):
+
+    def isValidOn(self, dateTime: datetime):
+        ''' Verifies if certificate is valid on specific date-time '''
+        nvb = self['tbs_certificate']['validity']['not_before'].native
+        nva = self['tbs_certificate']['validity']['not_after'].native
+        dateTime = dateTime.replace(tzinfo=nvb.tzinfo)
+        return nvb < dateTime < nva
+
     def verify(self, issuing_cert: x509.Certificate):
         """
         Verifies certificate has all required fields and that issuing certificate did issue this certificate.
