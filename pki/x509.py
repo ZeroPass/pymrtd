@@ -87,8 +87,11 @@ class CscaCertificate(Certificate):
     def verify(self, issuing_cert: x509.Certificate):
         super().verify(issuing_cert)
 
-        super()._require_extension_field('basic_constraints')
-        Certificate._require(self.ca, "Country signing certificate must be CA")
+        # Note: below checks are commented out because not all CSCA certificates follow the specification rules.
+        #       See German master list no. 20190925
+        #super()._require_extension_field('basic_constraints')
+        #Certificate._require('ca' in self.basic_constraints_values, 'Missing 'ca' field in basic constraints)
+        #Certificate._require('max_path_length' in self.basic_constraints_values, 'Missing 'ca' field in basic constraints)
         #Certificate._require( self.max_path_length is None or 0 <= self.max_path_length <= 1, #Note: Portuguese cross-link CSCA has value 2
         #                "Invalid CSCA path length constraint: {}".format(self.max_path_length)
         #)
