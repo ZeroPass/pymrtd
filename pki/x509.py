@@ -1,11 +1,35 @@
 from asn1crypto import x509
 from .cert_utils import verify_cert_sig
+from pymrtd.settings import *
 from datetime import datetime
 
 class CertificateVerificationError(Exception):
     pass
 
 class Certificate(x509.Certificate):
+    @property
+    def fingerprint(self) -> str:
+        """SHA256 hash string of this object"""
+        return self.sha256.hex()
+
+    @property
+    def issuerCountry(self) -> str:
+        """Function returns county of certificate issuer"""
+        country = self.issuer.native['country_name']
+        logger.debug("Getting 'Country issuer': " + country)
+        return country
+
+    @property
+    def subjectKey(self) -> bytes:
+        """Function returns subject key of certificate"""
+        logger.debug("Getting 'Subject key': " + self.key_identifier)
+        return self.key_identifier
+
+    @property
+    def authorityKey(self) -> bytes:
+        """Function returns authority key of certificate"""
+        logger.debug("Getting 'Authority key': " + self.authorityKey)
+        return self.authority_key_identifier
 
     def isValidOn(self, dateTime: datetime):
         ''' Verifies if certificate is valid on specific date-time '''
