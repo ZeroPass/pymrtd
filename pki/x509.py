@@ -1,10 +1,19 @@
 from asn1crypto import x509
 from .cert_utils import verify_cert_sig
+from datetime import datetime
 
 class CertificateVerificationError(Exception):
     pass
 
 class Certificate(x509.Certificate):
+
+    def isValidOn(self, dateTime: datetime):
+        ''' Verifies if certificate is valid on specific date-time '''
+        nvb = self['tbs_certificate']['validity']['not_before'].native
+        nva = self['tbs_certificate']['validity']['not_after'].native
+        dateTime = dateTime.replace(tzinfo=nvb.tzinfo)
+        return nvb < dateTime < nva
+
     def verify(self, issuing_cert: x509.Certificate):
         """
         Verifies certificate has all required fields and that issuing certificate did issue this certificate.
@@ -78,8 +87,11 @@ class CscaCertificate(Certificate):
     def verify(self, issuing_cert: x509.Certificate):
         super().verify(issuing_cert)
 
-        super()._require_extension_field('basic_constraints')
-        Certificate._require(self.ca, "Country signing certificate must be CA")
+        # Note: below checks are commented out because not all CSCA certificates follow the specification rules.
+        #       See German master list no. 20190925
+        #super()._require_extension_field('basic_constraints')
+        #Certificate._require('ca' in self.basic_constraints_values, 'Missing 'ca' field in basic constraints)
+        #Certificate._require('max_path_length' in self.basic_constraints_values, 'Missing 'ca' field in basic constraints)
         #Certificate._require( self.max_path_length is None or 0 <= self.max_path_length <= 1, #Note: Portuguese cross-link CSCA has value 2
         #                "Invalid CSCA path length constraint: {}".format(self.max_path_length)
         #)
@@ -98,14 +110,20 @@ class CscaCertificate(Certificate):
 
 class MasterListSignerCertificate(Certificate):
     def verify(self, issuing_cert: x509.Certificate):
-        super().verify(issuing_cert)
-        super()._require_extension_field('authority_key_identifier')
+        if self.ca: # Signer certificate is probably CSCA
+                    # We do this check because not all master list issuers follow the specification rules and
+                    # they use CSCA to sign master list instead of separate signer certificate issued by CSCA.
+                    # See for example German master list no. 20190925)
+            CscaCertificate.load(self.dump()).verify(issuing_cert)
+        else:
+            super().verify(issuing_cert)
+            super()._require_extension_field('authority_key_identifier')
 
-        super()._require_extension_field('key_usage')
-        key_usage = self.key_usage_value.native
-        Certificate._require(
-            'digital_signature' in key_usage,
-            "Missing field 'digitalSignature' in KeyUsage"
-        )
+            super()._require_extension_field('key_usage')
+            key_usage = self.key_usage_value.native
+            Certificate._require(
+                'digital_signature' in key_usage,
+                "Missing field 'digitalSignature' in KeyUsage"
+            )
 
-        super()._require_extension_value('extended_key_usage', ['2.23.136.1.1.3']) #icao 9303-p12 p27
+            super()._require_extension_value('extended_key_usage', ['2.23.136.1.1.3']) #icao 9303-p12 p27

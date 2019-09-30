@@ -10,16 +10,31 @@ from asn1crypto.algos import SignedDigestAlgorithm
 
 
 _STR_TO_HASH_ALGO = {
-    'md5': hashes.MD5(),
-    'sha1': hashes.SHA1(),
-    'sha224': hashes.SHA224(),
-    'sha256': hashes.SHA256(),
-    'sha384': hashes.SHA384(),
-    'sha512': hashes.SHA512(),
+    'md5'      : hashes.MD5(),
+    'sha1'     : hashes.SHA1(),
+    'sha224'   : hashes.SHA224(),
+    'sha256'   : hashes.SHA256(),
+    'sha384'   : hashes.SHA384(),
+    'sha512'   : hashes.SHA512(),
+    'sha3_224' : hashes.SHA3_224(),
+    'sha3_256' : hashes.SHA3_256(),
+    'sha3_384' : hashes.SHA3_384(),
+    'sha3_512' : hashes.SHA3_512(),
 }
 
+def get_hash_algo_by_name(hash_algo: str):
+    hash_algo = hash_algo.lower()
+    if hash_algo not in _STR_TO_HASH_ALGO:
+        raise ValueError("Invalid hash algorithm '{}'".format(hash_algo))
+    return _STR_TO_HASH_ALGO[hash_algo]
+
 def verify_sig(signing_cert: x509.Certificate, msg_bytes: bytes, sig_bytes: bytes, sig_algo: SignedDigestAlgorithm):
-    hash_algo = _STR_TO_HASH_ALGO[sig_algo.hash_algo]
+    """
+    Verifies digital signature of message against signing certificate's public key.
+    It returns True if verification succeeds, otherwise False.
+    """
+
+    hash_algo = get_hash_algo_by_name(sig_algo.hash_algo)
 
     class Verifier:
         def __init__(self, vf):
@@ -38,7 +53,7 @@ def verify_sig(signing_cert: x509.Certificate, msg_bytes: bytes, sig_bytes: byte
                 raise ValueError("Invalid mask generation algorithm: {}".format(mgf))
 
             mgf1_hash_algo = sig_algo_params['mask_gen_algorithm']['parameters']['algorithm'].native
-            mgf1_hash_algo = _STR_TO_HASH_ALGO[mgf1_hash_algo]
+            mgf1_hash_algo = get_hash_algo_by_name(mgf1_hash_algo)
             return Verifier(lambda: 
                 pub_key.verify(
                     sig_bytes,
