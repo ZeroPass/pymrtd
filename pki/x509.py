@@ -127,3 +127,21 @@ class MasterListSignerCertificate(Certificate):
             )
 
             super()._require_extension_value('extended_key_usage', ['2.23.136.1.1.3']) #icao 9303-p12 p27
+
+
+
+class DocumentSignerCertificate(Certificate):
+    """Class; object that stores x509 certificate and has supporting functions"""
+
+    def verify(self, issuing_cert: x509.Certificate) -> bool:
+        """
+        Verifies certificate has all required fields and that issuing certificate did issue this certificate.
+        On failure CertificateVerificationError exception is risen.
+        """
+
+        raise NotImplementedError()
+        self._verifiy_cert_fields()
+        self._verifiy_tbs_cert_fields()
+
+        if not verify_cert_sig(self, issuing_cert):
+            raise CertificateVerificationError("Signature verification failed")
