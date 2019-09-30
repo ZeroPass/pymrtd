@@ -40,17 +40,24 @@ class Connection:
     metaData = None
     session = None
 
-    def __init__(self, connection: Engine, metaData: MetaData):
+    def __init__(self, user: str, password: str, db: str, host='localhost', port=5432):
         """When we initialize the instance we meed to send connneciton and metadata instances to the object"""
         try:
-            self.connectionObj = connection
-            self.metaData = metaData
-            Session = sessionmaker(bind=connection)
-            self.session = Session()
+            # We connect with the help of the PostgreSQL URL
+            url = 'postgresql://{}:{}@{}:{}/{}'
+            url = url.format(user, password, host, port, db)
+
+            # The return value of create_engine() is our connection object
+            self.connectionObj = sqlalchemy.create_engine(url, client_encoding='utf8')
+
+            # We then bind the connection to MetaData()
+            self.metaData = sqlalchemy.MetaData(bind=self.connectionObj, reflect=True)
+
+            # we create session object to use it later
+            self.session = sessionmaker(bind=self.connectionObj)
         except Exception as e:
             raise ConnectionError("Connection failed.")
 
-
-    def getSession(self):
+    def getSession(self) -> A:
         """ It returns session to use it in the acutual storage objects/instances"""
         return self.session

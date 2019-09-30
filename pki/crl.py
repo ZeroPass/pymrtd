@@ -135,7 +135,7 @@ def write(crl: CertificateRevocationList, connection: Connection):
     except Exception as e:
         raise CertificationRevocationListError("Problem with writing the object")
 
-def read(countryName: str, connection: Connection):
+def readFromDB(countryName: str, connection: Connection):
     """Reading from database"""
     try:
         logger.info("Reading CRL object from database. Country:" + countryName)

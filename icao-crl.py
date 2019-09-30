@@ -5,6 +5,10 @@ import re
 #from data.storage.DSC import CertX509
 from pki.crl import CertificationRevocationList
 
+from data.storage.storageManager import Connection
+
+Connection
+
 certificateList = {}
 revocationList = {}
 parser = LDIFParser(open('C://Users/nejko/Desktop/ZeroPass/B1/random/parseCSCAandCRL/data/icaopkd-001-dsccrl-003749.ldif', 'rb'))
