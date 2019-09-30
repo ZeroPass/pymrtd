@@ -9,6 +9,7 @@ from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy import create_engine
 
 from .x509 import CscaCertificate
+from .cert_utils import verify_sig
 from pymrtd.data.storage.storageManager import Connection
 from pymrtd.settings import *
 
@@ -69,9 +70,10 @@ class CertificateRevocationList(CertificateList):
     #    logger.debug("Calculated value of signature algorithm")
     #    raise NotImplementedError()
 
-    def verify(self, issuer: CscaCertificate) ->bool:
+    def verify(self, issuer: CscaCertificate):
         """Function that check if crl is signed by provided CSCA"""
-        raise NotImplementedError()
+        verify_sig(issuer, self['tbs_cert_list'].dump(), self['signature'], self['signature_algorithm'])
+        
 
     @property
     def issuerCountry(self) -> str:
