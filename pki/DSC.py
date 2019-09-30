@@ -25,7 +25,7 @@ class DSC(Certificate):
         self.authorityKey = cert.authority_key_identifier
         self.subjectKey = cert.authority_key_identifier #temporary
 
-    def verify(self, issuing_cert: x509.Certificate):
+    def verify(self, issuing_cert: x509.Certificate) -> bool:
         """
         Verifies certificate has all required fields and that issuing certificate did issue this certificate.
         On failure CertificateVerificationError exception is risen.

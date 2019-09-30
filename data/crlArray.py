@@ -5,7 +5,7 @@
     Python Version: 3.6
 '''
 
-from structure.crl import CertificationRevocationList
+from pki.crl import CertificationRevocationList
 from settings import *
 
 

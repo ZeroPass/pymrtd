@@ -1,9 +1,9 @@
 from ldif3 import LDIFParser
-from asn1crypto import crl, x509, pem
+from asn1crypto import crl, x509
 import re
 
-from data.structure.DSC import CertX509
-from data.structure.crl import CertificationRevocationList
+#from data.storage.DSC import CertX509
+from pki.crl import CertificationRevocationList
 
 certificateList = {}
 revocationList = {}
@@ -12,7 +12,7 @@ for dn, entry in parser.parse():
     if 'userCertificate;binary' in entry:
         countryCode = re.findall(r'[c,C]{1}=(.*)(,dc=data){1}', dn)[0][0]
         cert = x509.Certificate.load(*entry['userCertificate;binary'])
-        gege = CertX509(cert)
+        #gege = CertX509(cert)
         if countryCode not in certificateList:
             certificateList[countryCode] = {}
         certificateList[countryCode][cert.serial_number] = cert
@@ -21,7 +21,8 @@ for dn, entry in parser.parse():
         countryCode = re.findall(r'[c,C]{1}=(.*)(,dc=data){1}', dn)[0][0]
         ##revocationList[countryCode] = x509.load_der_x509_crl(*entry['certificateRevocationList;binary'], default_backend())
         revocationList[countryCode] = crl.CertificateList.load(*entry['certificateRevocationList;binary'])
-        gege = CertificationRevocationList(revocationList[countryCode])
+        revocationListInObject = CertificationRevocationList(revocationList[countryCode])
+
         ##print("country:" + countryCode
         ##      + ",created: " + revocationList[countryCode].last_update.strftime("%Y-%m-%d %H:%M")
         ##      + ",next: " + revocationList[countryCode].next_update.strftime("%Y-%m-%d %H:%M")
