@@ -58,6 +58,6 @@ class Connection:
         except Exception as e:
             raise ConnectionError("Connection failed.")
 
-    def getSession(self) -> A:
+    def getSession(self):
         """ It returns session to use it in the acutual storage objects/instances"""
         return self.session
