@@ -16,19 +16,19 @@ class Certificate(x509.Certificate):
     def issuerCountry(self) -> str:
         """Function returns county of certificate issuer"""
         country = self.issuer.native['country_name']
-        logger.debug("Getting 'Country issuer': " + country)
+        logger.debug("Country of issuer: " + country)
         return country
 
     @property
     def subjectKey(self) -> bytes:
         """Function returns subject key of certificate"""
-        logger.debug("Getting 'Subject key': " + self.key_identifier)
+        logger.debug("Subject key: " + self.key_identifier.hex())
         return self.key_identifier
 
     @property
     def authorityKey(self) -> bytes:
         """Function returns authority key of certificate"""
-        logger.debug("Getting 'Authority key': " + self.authorityKey)
+        logger.debug("Authority key: " + self.authority_key_identifier.hex())
         return self.authority_key_identifier
 
     def isValidOn(self, dateTime: datetime):
@@ -38,14 +38,19 @@ class Certificate(x509.Certificate):
         dateTime = dateTime.replace(tzinfo=nvb.tzinfo)
         return nvb < dateTime < nva
 
-    def verify(self, issuing_cert: x509.Certificate):
+    def verify(self, issuing_cert: x509.Certificate, nc_verify = False):
         """
         Verifies certificate has all required fields and that issuing certificate did issue this certificate.
         On failure CertificateVerificationError exception is risen.
+
+        :param issuing_cert: The certificate that issued this certificate
+        :param nc_verify: Non-conformant verification, If True only signature will be verified.
         """
 
-        self._verifiy_cert_fields()
-        self._verifiy_tbs_cert_fields()
+        # Verify certificate is conform to the ICAO specifications 
+        if not nc_verify:
+            self._verifiy_cert_fields()
+            self._verifiy_tbs_cert_fields()
 
         if not verify_cert_sig(self, issuing_cert):
             raise CertificateVerificationError("Signature verification failed")
@@ -105,43 +110,98 @@ class Certificate(x509.Certificate):
 
 
 class CscaCertificate(Certificate):
-    def verify(self):
-        self.verify(self)
+    def verify(self, nc_verify = False):
+        self.verify(self, nc_verify)
 
-    def verify(self, issuing_cert: x509.Certificate):
-        super().verify(issuing_cert)
+    def verify(self, issuing_cert: x509.Certificate, nc_verify = False):
+        """
+        Verifies certificate has all required fields and that issuing certificate did issue this certificate.
+        On failure CertificateVerificationError exception is risen.
 
-        # Note: below checks are commented out because not all CSCA certificates follow the specification rules.
-        #       See German master list no. 20190925
-        #super()._require_extension_field('basic_constraints')
-        #Certificate._require('ca' in self.basic_constraints_values, 'Missing 'ca' field in basic constraints)
-        #Certificate._require('max_path_length' in self.basic_constraints_values, 'Missing 'ca' field in basic constraints)
-        #Certificate._require( self.max_path_length is None or 0 <= self.max_path_length <= 1, #Note: Portuguese cross-link CSCA has value 2
-        #                "Invalid CSCA path length constraint: {}".format(self.max_path_length)
-        #)
+        :param issuing_cert: The certificate that issued this certificate.
+        :param nc_verify: Non-conformant verification, If True only signature will be verified.
+        """
 
-        super()._require_extension_field('key_identifier')
+        super().verify(issuing_cert, nc_verify)
 
-        super()._require_extension_field('key_usage')
-        key_usage = self.key_usage_value.native
-        Certificate._require(
-            'key_cert_sign' in key_usage or 'digital_signature' in key_usage, # Note:  'digital_signature' usually should not be present (icao 9303-p12 page 17)
-            "Missing field 'keyCertSign' in KeyUsage"
-        )
-        Certificate._require('crl_sign' in key_usage, "Missing field 'cRLSign' in KeyUsage")
+        # Verify certificate is conform to the ICAO specifications 
+        if not nc_verify:
+            super()._require_extension_field('subject_key_identifier')
+            Certificate._require(self.subjectKey is not None, "Missing required field 'subjectKeyIdentifier' in SubjectKeyIdentifier extension")
+
+            super()._require_extension_field('basic_constraints')
+            Certificate._require('ca' in self.basic_constraints_values, "Missing 'ca' field in basic constraints")
+            Certificate._require('max_path_length' in self.basic_constraints_values, "Missing 'ca' field in basic constraints")
+            Certificate._require( self.max_path_length is None or 0 <= self.max_path_length <= 1, #Note: Portuguese cross-link CSCA has value 2
+                            "Invalid CSCA path length constraint: {}".format(self.max_path_length)
+            )
+
+            super()._require_extension_field('key_identifier')
+
+            super()._require_extension_field('key_usage')
+            key_usage = self.key_usage_value.native
+            Certificate._require( 'key_cert_sign' in key_usage, "Missing field 'keyCertSign' in KeyUsage extension")
+            Certificate._require('crl_sign' in key_usage, "Missing field 'cRLSign' in KeyUsage extension")
 
 
 
 class MasterListSignerCertificate(Certificate):
-    def verify(self, issuing_cert: x509.Certificate):
+    def verify(self, issuing_cert: x509.Certificate, nc_verify = False):
+        """
+        Verifies certificate has all required fields and that issuing certificate did issue this certificate.
+        On failure CertificateVerificationError exception is risen.
+
+        :param issuing_cert: The certificate that issued this certificate.
+        :param nc_verify: Non-conformant verification, If True only signature will be verified.
+        """
+
         if self.ca: # Signer certificate is probably CSCA
                     # We do this check because not all master list issuers follow the specification rules and
                     # they use CSCA to sign master list instead of separate signer certificate issued by CSCA.
                     # See for example German master list no. 20190925)
-            CscaCertificate.load(self.dump()).verify(issuing_cert)
+            CscaCertificate.load(self.dump()).verify(issuing_cert, nc_verify)
         else:
-            super().verify(issuing_cert)
+            super().verify(issuing_cert, nc_verify)
+
+            # Verify certificate is conform to the ICAO specifications 
+            if not nc_verify:
+                super()._require_extension_field('authority_key_identifier')
+                Certificate._require(self.authorityKey is not None, "Missing required field 'keyIdentifier' in AuthorityKeyIdentifier extension")
+
+                super()._require_extension_field('subject_key_identifier')
+                Certificate._require(self.subjectKey is not None, "Missing required field 'subjectKeyIdentifier' in SubjectKeyIdentifier extension")
+
+                super()._require_extension_field('key_usage')
+                key_usage = self.key_usage_value.native
+                Certificate._require(
+                    'digital_signature' in key_usage,
+                    "Missing field 'digitalSignature' in KeyUsage"
+                )
+
+                super()._require_extension_value('extended_key_usage', ['2.23.136.1.1.3']) #icao 9303-p12 p27
+
+
+
+class DocumentSignerCertificate(Certificate):
+    """ Document Signer Certificate (DSC) which should be used to verify SOD data file in eMRTD """
+
+    def verify(self, issuing_cert: x509.Certificate, nc_verify = False) -> bool:
+        """
+        Verifies certificate has all required fields and that issuing certificate did issue this certificate.
+        On failure CertificateVerificationError exception is risen.
+
+        :param issuing_cert: The certificate that issued this certificate.
+        :param nc_verify: Non-conformant verification, If True only signature will be verified.
+        """
+
+        super().verify(issuing_cert, nc_verify)
+
+        if not nc_verify:
             super()._require_extension_field('authority_key_identifier')
+            Certificate._require(self.authorityKey is not None, "Missing required field 'keyIdentifier' in AuthorityKeyIdentifier extension")
+
+            super()._require_extension_field('subject_key_identifier')
+            Certificate._require(self.subjectKey is not None, "Missing required field 'subjectKeyIdentifier' in SubjectKeyIdentifier extension")
 
             super()._require_extension_field('key_usage')
             key_usage = self.key_usage_value.native
@@ -149,23 +209,3 @@ class MasterListSignerCertificate(Certificate):
                 'digital_signature' in key_usage,
                 "Missing field 'digitalSignature' in KeyUsage"
             )
-
-            super()._require_extension_value('extended_key_usage', ['2.23.136.1.1.3']) #icao 9303-p12 p27
-
-
-
-class DocumentSignerCertificate(Certificate):
-    """Class; object that stores x509 certificate and has supporting functions"""
-
-    def verify(self, issuing_cert: x509.Certificate) -> bool:
-        """
-        Verifies certificate has all required fields and that issuing certificate did issue this certificate.
-        On failure CertificateVerificationError exception is risen.
-        """
-
-        raise NotImplementedError()
-        self._verifiy_cert_fields()
-        self._verifiy_tbs_cert_fields()
-
-        if not verify_cert_sig(self, issuing_cert):
-            raise CertificateVerificationError("Signature verification failed")
