@@ -79,49 +79,42 @@ class CertificateRevocationList(CertificateList):
     def issuerCountry(self) -> str:
         """Function returns country of CRL issuer """
         country = self.issuer.native['country_name']
-        logger.debug("Getting country of CRL issuer: " + country)
         return country
 
     @property
     def size(self) -> int:
         """Function returns size of CRL"""
         size = len(self['tbs_cert_list']['revoked_certificates'])
-        logger.debug("Getting size of CRL: " + size)
         return size
 
     @property
     def thisUpdate(self) -> datetime:
         """In certificate the field is 'this_update'"""
         this_update = self['tbs_cert_list']['this_update'].native
-        logger.debug("CRL has been created on: " + str(this_update))
         return this_update
 
     @property
     def nextUpdate(self) -> datetime:
         """In certificate the field is 'next_update'"""
         next_update = self['tbs_cert_list']['next_update'].native
-        logger.debug("Next CRL update: " + str(next_update))
         return next_update
 
     @property
     def signatureAlgorithm(self) -> str:
         """It returns signature algorithm"""
         sig_algo = self['signature_algorithm'].signature_algo
-        logger.debug("Signature algorithm: " + sig_algo)
         return sig_algo
 
     @property
     def signatureHashAlgorithm(self) -> str:
         """It returns hash of signature algorithm"""
         hash_algo = self['signature_algorithm'].hash_algo 
-        logger.debug("Signature hash algorithm: " + hash_algo)
         return hash_algo
         
     @property
     def fingerprint(self) -> str:
         """SHA256 hash over CRL object"""
         fp = self.sha256.hex()
-        logger.debug("Fingerprint of CRL object: " + fp)
         return fp
 
 

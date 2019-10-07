@@ -1,6 +1,5 @@
 from asn1crypto import x509
 from .cert_utils import verify_cert_sig
-from pymrtd.settings import *
 from datetime import datetime
 
 class CertificateVerificationError(Exception):
@@ -16,19 +15,16 @@ class Certificate(x509.Certificate):
     def issuerCountry(self) -> str:
         """Function returns county of certificate issuer"""
         country = self.issuer.native['country_name']
-        logger.debug("Country of issuer: " + country)
         return country
 
     @property
     def subjectKey(self) -> bytes:
         """Function returns subject key of certificate"""
-        logger.debug("Subject key: " + self.key_identifier.hex())
         return self.key_identifier
 
     @property
     def authorityKey(self) -> bytes:
         """Function returns authority key of certificate"""
-        logger.debug("Authority key: " + self.authority_key_identifier.hex())
         return self.authority_key_identifier
 
     def isValidOn(self, dateTime: datetime):
