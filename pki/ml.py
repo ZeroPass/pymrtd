@@ -141,7 +141,7 @@ class CscaMasterList():
 
     def verify(self):
         ''' 
-        Verifies every SignerInfo object and digital signature over content.
+        Verifies every SignerInfo object and the digital signature over content.
         On failure CscaMasterListError exception is risen.
         '''
 

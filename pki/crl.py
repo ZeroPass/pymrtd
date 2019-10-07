@@ -71,13 +71,13 @@ class CertificateRevocationList(CertificateList):
     #    raise NotImplementedError()
 
     def verify(self, issuer: CscaCertificate):
-        """Function that check if crl is signed by provided CSCA"""
+        """Function verifies if crl is signed by provided issuer CSCA"""
         verify_sig(issuer, self['tbs_cert_list'].dump(), self['signature'], self['signature_algorithm'])
         
 
     @property
     def issuerCountry(self) -> str:
-        """Function returns country of CRL issuer """
+        """Function returns country of CRL issuer"""
         country = self.issuer.native['country_name']
         return country
 
@@ -89,13 +89,13 @@ class CertificateRevocationList(CertificateList):
 
     @property
     def thisUpdate(self) -> datetime:
-        """In certificate the field is 'this_update'"""
+        """Returns the date when this CRL was issued"""
         this_update = self['tbs_cert_list']['this_update'].native
         return this_update
 
     @property
     def nextUpdate(self) -> datetime:
-        """In certificate the field is 'next_update'"""
+        """Returns the date of next CRL issuance"""
         next_update = self['tbs_cert_list']['next_update'].native
         return next_update
 
@@ -113,7 +113,7 @@ class CertificateRevocationList(CertificateList):
         
     @property
     def fingerprint(self) -> str:
-        """SHA256 hash over CRL object"""
+        """SHA256 hash over this CRL object"""
         fp = self.sha256.hex()
         return fp
 
