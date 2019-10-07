@@ -34,22 +34,23 @@ class Certificate(x509.Certificate):
         dateTime = dateTime.replace(tzinfo=nvb.tzinfo)
         return nvb < dateTime < nva
 
-    def verify(self, issuing_cert: x509.Certificate, nc_verify = False):
+    def verify(self, issuing_cert: x509.Certificate, nc_verification = False):
         """
         Verifies certificate has all required fields and that issuing certificate did issue this certificate.
         On failure CertificateVerificationError exception is risen.
 
         :param issuing_cert: The certificate that issued this certificate
-        :param nc_verify: Non-conformant verification, If True only signature will be verified.
+        :param nc_verification: Non-conformance verification, If False only signature will be verified.
         """
-
-        # Verify certificate is conform to the ICAO specifications 
-        if not nc_verify:
-            self._verifiy_cert_fields()
-            self._verifiy_tbs_cert_fields()
 
         if not verify_cert_sig(self, issuing_cert):
             raise CertificateVerificationError("Signature verification failed")
+
+        # Verify certificate is conform to the ICAO specifications 
+        if nc_verification:
+            self._verifiy_cert_fields()
+            self._verifiy_tbs_cert_fields()
+
 
     def _require(cond, message: str):
         if not cond:
@@ -106,22 +107,22 @@ class Certificate(x509.Certificate):
 
 
 class CscaCertificate(Certificate):
-    def verify(self, nc_verify = False):
-        self.verify(self, nc_verify)
+    def verify(self, nc_verification = False):
+        self.verify(self, nc_verification)
 
-    def verify(self, issuing_cert: x509.Certificate, nc_verify = False):
+    def verify(self, issuing_cert: x509.Certificate, nc_verification = False):
         """
         Verifies certificate has all required fields and that issuing certificate did issue this certificate.
         On failure CertificateVerificationError exception is risen.
 
         :param issuing_cert: The certificate that issued this certificate.
-        :param nc_verify: Non-conformant verification, If True only signature will be verified.
+        :param nc_verification: Non-conformance verification, If False only signature will be verified.
         """
 
-        super().verify(issuing_cert, nc_verify)
+        super().verify(issuing_cert, nc_verification)
 
         # Verify certificate is conform to the ICAO specifications 
-        if not nc_verify:
+        if nc_verification:
             super()._require_extension_field('subject_key_identifier')
             Certificate._require(self.subjectKey is not None, "Missing required field 'subjectKeyIdentifier' in SubjectKeyIdentifier extension")
 
@@ -142,25 +143,25 @@ class CscaCertificate(Certificate):
 
 
 class MasterListSignerCertificate(Certificate):
-    def verify(self, issuing_cert: x509.Certificate, nc_verify = False):
+    def verify(self, issuing_cert: x509.Certificate, nc_verification = False):
         """
         Verifies certificate has all required fields and that issuing certificate did issue this certificate.
         On failure CertificateVerificationError exception is risen.
 
         :param issuing_cert: The certificate that issued this certificate.
-        :param nc_verify: Non-conformant verification, If True only signature will be verified.
+        :param nc_verification: Non-conformance verification, If False only signature will be verified.
         """
 
         if self.ca: # Signer certificate is probably CSCA
                     # We do this check because not all master list issuers follow the specification rules and
                     # they use CSCA to sign master list instead of separate signer certificate issued by CSCA.
                     # See for example German master list no. 20190925)
-            CscaCertificate.load(self.dump()).verify(issuing_cert, nc_verify)
+            CscaCertificate.load(self.dump()).verify(issuing_cert, nc_verification)
         else:
-            super().verify(issuing_cert, nc_verify)
+            super().verify(issuing_cert, nc_verification)
 
-            # Verify certificate is conform to the ICAO specifications 
-            if not nc_verify:
+            # Verify certificate conforms to the ICAO specifications 
+            if nc_verification:
                 super()._require_extension_field('authority_key_identifier')
                 Certificate._require(self.authorityKey is not None, "Missing required field 'keyIdentifier' in AuthorityKeyIdentifier extension")
 
@@ -181,18 +182,18 @@ class MasterListSignerCertificate(Certificate):
 class DocumentSignerCertificate(Certificate):
     """ Document Signer Certificate (DSC) which should be used to verify SOD data file in eMRTD """
 
-    def verify(self, issuing_cert: x509.Certificate, nc_verify = False) -> bool:
+    def verify(self, issuing_cert: x509.Certificate, nc_verification = False) -> bool:
         """
         Verifies certificate has all required fields and that issuing certificate did issue this certificate.
         On failure CertificateVerificationError exception is risen.
 
         :param issuing_cert: The certificate that issued this certificate.
-        :param nc_verify: Non-conformant verification, If True only signature will be verified.
+        :param nc_verification: Non-conformance verification, If False only signature will be verified.
         """
 
-        super().verify(issuing_cert, nc_verify)
+        super().verify(issuing_cert, nc_verification)
 
-        if not nc_verify:
+        if nc_verification:
             super()._require_extension_field('authority_key_identifier')
             Certificate._require(self.authorityKey is not None, "Missing required field 'keyIdentifier' in AuthorityKeyIdentifier extension")
 
