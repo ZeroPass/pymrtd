@@ -5,8 +5,9 @@ import asn1crypto.core as asn1
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 
+from pymrtd.pki import algo_utils, cert_utils
 from .x509 import CscaCertificate, MasterListSignerCertificate
-from .cert_utils import get_hash_algo_by_name, verify_sig
+
 
 class CertList(asn1.SetOf):
     _child_spec = CscaCertificate
@@ -92,7 +93,7 @@ class CscaMasterList():
 
         si = self._cms['content']['signer_infos'][sidx] 
         hash_algo = si['digest_algorithm']['algorithm'].native
-        h = get_hash_algo_by_name(hash_algo)
+        h = algo_utils.get_hash_algo_by_name(hash_algo)
         return hashes.Hash(h, backend=default_backend())
 
     def getSignatureBySidx(self, sidx):
@@ -108,36 +109,8 @@ class CscaMasterList():
 
         si = self._cms['content']['signer_infos'][sidx] 
         hash_algo = si['digest_algorithm']['algorithm'].native
-
-        sig_algo   = si['signature_algorithm']
-        n_sig_algo = sig_algo['algorithm'].native 
-        if n_sig_algo  == 'rsassa_pkcs1v15' or n_sig_algo == 'ecdsa' or n_sig_algo == 'dsa':
-            if n_sig_algo == 'rsassa_pkcs1v15':
-                n_sig_algo = 'rsa'
-
-            if hash_algo == 'md5':
-                sig_algo = SignedDigestAlgorithm({'algorithm': 'md5_' + n_sig_algo})
-            elif hash_algo == 'sha1':
-                sig_algo = SignedDigestAlgorithm({'algorithm': 'sha1_' + n_sig_algo})
-            elif hash_algo == 'sha224':
-                sig_algo = SignedDigestAlgorithm({'algorithm': 'sha224_' + n_sig_algo})
-            elif hash_algo == 'sha256':
-                sig_algo = SignedDigestAlgorithm({'algorithm': 'sha256_' + n_sig_algo})
-            elif hash_algo == 'sha384':
-                sig_algo = SignedDigestAlgorithm({'algorithm': 'sha384_' + n_sig_algo})
-            elif hash_algo == 'sha512':
-                sig_algo = SignedDigestAlgorithm({'algorithm': 'sha512_' + n_sig_algo})
-            elif hash_algo == 'sha3_224':
-                sig_algo = SignedDigestAlgorithm({'algorithm': 'sha3_224_' + n_sig_algo})
-            elif hash_algo == 'sha3_256':
-                sig_algo = SignedDigestAlgorithm({'algorithm': 'sha3_256_' + n_sig_algo})
-            elif hash_algo == 'sha3_384':
-                sig_algo = SignedDigestAlgorithm({'algorithm': 'sha3_384_' + n_sig_algo})
-            elif hash_algo == 'sha3_512':
-                sig_algo = SignedDigestAlgorithm({'algorithm': 'sha3_512_' + n_sig_algo})
-
-        return sig_algo
-
+        sig_algo  = si['signature_algorithm']
+        return algo_utils.update_sig_algo_if_no_hash_algo(sig_algo, hash_algo)
 
     def verify(self):
         ''' 
@@ -187,5 +160,5 @@ class CscaMasterList():
 
             signature = si['signature'].native
             sig_algo  = self.getSigAlgoBySidx(sidx)
-            if not verify_sig(c, sa.dump(force=True), signature, sig_algo):
+            if not cert_utils.verify_sig(c, sa.dump(force=True), signature, sig_algo):
                 raise CscaMasterListError("Signature verification failed")
