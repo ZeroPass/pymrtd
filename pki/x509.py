@@ -1,6 +1,9 @@
 from asn1crypto import x509
+import asn1crypto.core as asn1
 from .cert_utils import verify_cert_sig
 from datetime import datetime
+
+id_icao_cscaMasterList = asn1.ObjectIdentifier('2.23.136.1.1.2')  # ICAO 9303-12-p26
 
 class CertificateVerificationError(Exception):
     pass
@@ -175,7 +178,7 @@ class MasterListSignerCertificate(Certificate):
                     "Missing field 'digitalSignature' in KeyUsage"
                 )
 
-                super()._require_extension_value('extended_key_usage', ['2.23.136.1.1.3']) #icao 9303-p12 p27
+                super()._require_extension_value('extended_key_usage', [id_icao_cscaMasterList.dotted]) #icao 9303-p12 p20, p27
 
 
 
