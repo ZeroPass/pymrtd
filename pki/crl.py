@@ -5,14 +5,18 @@
     Python Version: 3.6
 '''
 
-from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy import create_engine
+from sqlalchemy import Column, Integer, String, MetaData, Table, DateTime
+from sqlalchemy.orm import mapper
 
 from .x509 import CscaCertificate
-from pymrtd.data.storage.storageManager import Connection
 from pymrtd.settings import *
+from sqlalchemy.ext.declarative import declarative_base
+Base = declarative_base()
+from datetime import  datetime
 
 from asn1crypto.crl import CertificateList
+
+from sqlalchemy import inspect
 
 import datetime
 import enum
@@ -31,18 +35,13 @@ CRL: \
     -SHA256 hash over whole object string or bytes
 """
 
-class CertificationRevocationListError(Exception):
+class CertificateRevocationListError(Exception):
     pass
-
-#class SignatureAlgorithm(enum.Enum):
-#    Alg1 = 1
-#    Alg2 = 2
-#    Alg3 = 3
 
 class CertificateRevocationList(CertificateList):
     """Class; object that stores Certificate Revocation List (CRL) and has supporting functions"""
     #__tablename__ = 'CertificationRevocationList'
-
+    #id = None
     #crlObj = None #Column(String)
     #hashOfCrlObj = Column(String)
     #countryName = Column(String, primary_key=True)
@@ -64,15 +63,6 @@ class CertificateRevocationList(CertificateList):
     #    self.signatureHashAlgorithm = self.calculateHashOfSignatureAlgorithm(crl['tbs_cert_list']['signature']['algorithm'])
 
 
-    #def calculateHashOfSignatureAlgorithm(self, signatureAlgorithm: CscaCertificate) -> str:
-    #    """Calculate hash of signature algorithm"""
-    #    logger.debug("Calculated value of signature algorithm")
-    #    raise NotImplementedError()
-
-    def verify(self, issuer: CscaCertificate) ->bool:
-        """Function that check if crl is signed by provided CSCA"""
-        raise NotImplementedError()
-
     @property
     def issuerCountry(self) -> str:
         """Function returns country of CRL issuer """
@@ -84,7 +74,7 @@ class CertificateRevocationList(CertificateList):
     def size(self) -> int:
         """Function returns size of CRL"""
         size = len(self['tbs_cert_list']['revoked_certificates'])
-        logger.debug("Getting size of CRL: " + size)
+        logger.debug("Getting size of CRL: " + str(size))
         return size
 
     @property
@@ -111,10 +101,10 @@ class CertificateRevocationList(CertificateList):
     @property
     def signatureHashAlgorithm(self) -> str:
         """It returns hash of signature algorithm"""
-        hash_algo = self['signature_algorithm'].hash_algo 
+        hash_algo = self['signature_algorithm'].hash_algo
         logger.debug("Signature hash algorithm: " + hash_algo)
         return hash_algo
-        
+
     @property
     def fingerprint(self) -> str:
         """SHA256 hash over CRL object"""
@@ -122,24 +112,80 @@ class CertificateRevocationList(CertificateList):
         logger.debug("Fingerprint of CRL object: " + fp)
         return fp
 
+    def calculateHashOfSignatureAlgorithm(self, signatureAlgorithm: CscaCertificate) -> str:
+        """Calculate hash of signature algorithm"""
+        logger.debug("Calculated value of signature algorithm")
+        raise NotImplementedError()
+
+    def verify(self, issuer: CscaCertificate) ->bool:
+        """Function that check if crl is signed by provided CSCA"""
+        raise NotImplementedError()
+
+class CertificateRevocationListStorage(object):
+    """Class for interaaction between code structure and database"""
+    _object = None
+    _issuerCountry = None
+    _size = None
+    _thisUpdate = None
+    _nextUpdate = None
+    _signatureAlgorithm = None
+    _signatureHashAlgorithm = None
+    _fingerprint = None
+
+    def __init__(self, crl: CertificateRevocationList):
+        """Initialization class with serialization of CRL"""
+        self.size = crl.size
+        self.issuerCountry = crl.issuerCountry
+        self.thisUpdate = crl.thisUpdate
+        self.nextUpdate = crl.nextUpdate
+        self.signatureAlgorithm = crl.signatureAlgorithm
+        self.signatureHashAlgorithm = crl.signatureHashAlgorithm
+        self.serializeCRL(crl)
+
+    def serializeCRL(self, crl: CertificateRevocationList):
+        """Function serialize CRL object to sequence"""
+        self.object = crl.dump()
+
+    def getObject(self) -> CertificateRevocationList:
+        """Returns crl object"""
+        return CertificateRevocationList.load(self.object)
+
+
+"""
+Column('id', Integer, primary_key=True),
+                            Column('issuerCountry', String),
+                            Column('size', Integer),
+                            Column('validStart', DateTime),
+                            Column('validEnd', DateTime),
+                            Column('signatureAlgorithm', String),
+                            Column('signatureHashAlgorithm', String)
+                            )
+                            """
 
 #
 #Storage management functions
 #
-def write(crl: CertificateRevocationList, connection: Connection):
+from pymrtd.data.storage.storageManager import Connection
+
+def writeToDB_CRL(crl: CertificateRevocationList, connection: Connection):
     """Write to database with ORM"""
     try:
-        logger.info("Writing CRL object to database. Country:" + crl.countryName())
-        connection.getSession().add(crl)
+        logger.info("Writing CRL object to database. Country: " + crl.issuerCountry)
+        crls = CertificateRevocationListStorage(crl)
+        connection.getSession().add(crls)
         connection.getSession().commit()
-    except Exception as e:
-        raise CertificationRevocationListError("Problem with writing the object")
 
-def readFromDB(countryName: str, connection: Connection):
+    except Exception as e:
+        raise CertificateRevocationListError("Problem with writing the object")
+
+def readFromDB_CRL(issuerCountry: str, connection: Connection) -> CertificateRevocationList:
     """Reading from database"""
     try:
-        logger.info("Reading CRL object from database. Country:" + countryName)
-        connection.getSession().query(CertificationRevocationList).count()
-        r = 8
+        logger.info("Reading CRL object from database. Country:" + issuerCountry)
+        connection.getSession().query(CertificateRevocationListStorage).count()
+        ter = connection.getSession().query(CertificateRevocationListStorage).all()[connection.getSession().query(CertificateRevocationListStorage).count()-1]
+        ter1 = ter.getObject()
+
     except Exception as e:
-        raise CertificationRevocationListError("Problem with writing the object")
+        raise CertificateRevocationListError("Problem with writing the object")
+
