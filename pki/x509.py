@@ -1,6 +1,6 @@
 from asn1crypto import x509
 import asn1crypto.core as asn1
-from .cert_utils import verify_cert_sig
+from .sig_utils import verify_cert_sig
 from datetime import datetime
 
 id_icao_cscaMasterList = asn1.ObjectIdentifier('2.23.136.1.1.2')  # ICAO 9303-12-p26

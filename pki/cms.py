@@ -3,9 +3,10 @@ from asn1crypto import algos, cms
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 
-from pymrtd.pki import algo_utils, cert_utils, x509
+from pymrtd.pki import algo_utils, sig_utils, x509
 
 from typing import List, NoReturn, Optional, Union
+
 
 class SignedDataError(Exception):
     pass
@@ -82,7 +83,7 @@ class SignedData(cms.SignedData):
         ''' 
         Verifies every SignerInfo object and the digital signature over content.
         On failure SignedDataError exception is risen.
-        @param (Optional) List of signing certificates
+        :param certificateList: (Optional) List of signing certificates
         '''
 
         for sidx, si in enumerate(self.signerInfos):
@@ -137,7 +138,7 @@ class SignedData(cms.SignedData):
 
             signature = si['signature'].native
             sig_algo  = self.getSigAlgoBySidx(sidx)
-            if not cert_utils.verify_sig(c, sa.dump(force=True), signature, sig_algo):
+            if not sig_utils.verify_sig(c, sa.dump(force=True), signature, sig_algo):
                 raise SignedDataError("Signature verification failed")
 
 
