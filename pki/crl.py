@@ -9,6 +9,8 @@ from sqlalchemy import Column, Integer, String, MetaData, Table, DateTime
 from sqlalchemy.orm import mapper
 
 from .x509 import CscaCertificate
+from .cert_utils import verify_sig
+from pymrtd.data.storage.storageManager import Connection
 from pymrtd.settings import *
 from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
@@ -63,11 +65,20 @@ class CertificateRevocationList(CertificateList):
     #    self.signatureHashAlgorithm = self.calculateHashOfSignatureAlgorithm(crl['tbs_cert_list']['signature']['algorithm'])
 
 
+    #def calculateHashOfSignatureAlgorithm(self, signatureAlgorithm: CscaCertificate) -> str:
+    #    """Calculate hash of signature algorithm"""
+    #    logger.debug("Calculated value of signature algorithm")
+    #    raise NotImplementedError()
+
+    def verify(self, issuer: CscaCertificate):
+        """Function verifies if crl is signed by provided issuer CSCA"""
+        verify_sig(issuer, self['tbs_cert_list'].dump(), self['signature'], self['signature_algorithm'])
+        
+
     @property
     def issuerCountry(self) -> str:
-        """Function returns country of CRL issuer """
+        """Function returns country of CRL issuer"""
         country = self.issuer.native['country_name']
-        logger.debug("Getting country of CRL issuer: " + country)
         return country
 
     @property
@@ -79,23 +90,20 @@ class CertificateRevocationList(CertificateList):
 
     @property
     def thisUpdate(self) -> datetime:
-        """In certificate the field is 'this_update'"""
+        """Returns the date when this CRL was issued"""
         this_update = self['tbs_cert_list']['this_update'].native
-        logger.debug("CRL has been created on: " + str(this_update))
         return this_update
 
     @property
     def nextUpdate(self) -> datetime:
-        """In certificate the field is 'next_update'"""
+        """Returns the date of next CRL issuance"""
         next_update = self['tbs_cert_list']['next_update'].native
-        logger.debug("Next CRL update: " + str(next_update))
         return next_update
 
     @property
     def signatureAlgorithm(self) -> str:
         """It returns signature algorithm"""
         sig_algo = self['signature_algorithm'].signature_algo
-        logger.debug("Signature algorithm: " + sig_algo)
         return sig_algo
 
     @property
@@ -107,9 +115,8 @@ class CertificateRevocationList(CertificateList):
 
     @property
     def fingerprint(self) -> str:
-        """SHA256 hash over CRL object"""
+        """SHA256 hash over this CRL object"""
         fp = self.sha256.hex()
-        logger.debug("Fingerprint of CRL object: " + fp)
         return fp
 
     def calculateHashOfSignatureAlgorithm(self, signatureAlgorithm: CscaCertificate) -> str:

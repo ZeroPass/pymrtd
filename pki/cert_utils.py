@@ -1,5 +1,4 @@
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, ed25519, ec as ecc
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.serialization import load_der_public_key
@@ -8,25 +7,8 @@ from cryptography import exceptions as cryptography_exceptions
 from asn1crypto import x509
 from asn1crypto.algos import SignedDigestAlgorithm
 
+from .algo_utils import get_hash_algo_by_name
 
-_STR_TO_HASH_ALGO = {
-    'md5'      : hashes.MD5(),
-    'sha1'     : hashes.SHA1(),
-    'sha224'   : hashes.SHA224(),
-    'sha256'   : hashes.SHA256(),
-    'sha384'   : hashes.SHA384(),
-    'sha512'   : hashes.SHA512(),
-    'sha3_224' : hashes.SHA3_224(),
-    'sha3_256' : hashes.SHA3_256(),
-    'sha3_384' : hashes.SHA3_384(),
-    'sha3_512' : hashes.SHA3_512(),
-}
-
-def get_hash_algo_by_name(hash_algo: str):
-    hash_algo = hash_algo.lower()
-    if hash_algo not in _STR_TO_HASH_ALGO:
-        raise ValueError("Invalid hash algorithm '{}'".format(hash_algo))
-    return _STR_TO_HASH_ALGO[hash_algo]
 
 def verify_sig(signing_cert: x509.Certificate, msg_bytes: bytes, sig_bytes: bytes, sig_algo: SignedDigestAlgorithm):
     """
