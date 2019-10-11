@@ -62,9 +62,10 @@ class CscaMasterList():
         if self._sd.content.version != 0: # ICAO 9303-12-p27
             raise CscaMasterListError("Unsupported encapContentInfo version: {}, should be 0".format(self._sd.version))
         
-        c = self._sd.certificates[0]
         if len(self._sd.certificates) < 1:
             raise CscaMasterListError("No master list signer certificate found") 
+
+        assert isinstance(self._sd.certificates[0], MasterListSignerCertificate)
 
     @property
     def signerCertificates(self):
