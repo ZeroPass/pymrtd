@@ -2,11 +2,8 @@ import asn1crypto.core as asn1
 from asn1crypto.util import int_from_bytes
 from asn1crypto.keys import PublicKeyInfo
 
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.serialization import load_der_public_key
-
 from .base import ElementaryFile
-from pymrtd.pki import sig_utils
+from pymrtd.pki import sig_utils, keys
 
 
 class DataGroupNumber(asn1.Integer):
@@ -63,10 +60,8 @@ class DG15(DataGroup):
         return self.content
 
     @property
-    def aaPublicKey(self):
+    def aaPublicKey(self) -> keys.AAPublicKey:
         ''' Returns active authentication public key '''
-        return load_der_public_key(self.aaPublicKeyInfo.dump(), default_backend())
-
-    def verifySig(msg: bytes, sig: bytes):
-        # sig_utils.verify_sig()
-        raise NotImplementedError()
+        if not hasattr(self, '_aakey'):
+            self._aakey = keys.AAPublicKey.load(self.aaPublicKeyInfo.dump())
+        return self._aakey
