@@ -1,9 +1,10 @@
 from asn1crypto import x509
 import asn1crypto.core as asn1
-from .sig_utils import verify_cert_sig
-from datetime import datetime
 
-id_icao_cscaMasterListSigningKey = asn1.ObjectIdentifier('2.23.136.1.1.3')  # ICAO 9303-12-p27
+from .oids import id_icao_cscaMasterListSigningKey
+from .sig_utils import verify_cert_sig
+
+from datetime import datetime
 
 class CertificateVerificationError(Exception):
     pass
@@ -162,7 +163,7 @@ class MasterListSignerCertificate(Certificate):
             CscaCertificate.load(self.dump()).verify(issuing_cert, nc_verification)
         else:
             super().verify(issuing_cert, nc_verification)
-            super()._require_extension_value('extended_key_usage', [id_icao_cscaMasterListSigningKey.dotted]) #icao 9303-p12 p20, p27
+            super()._require_extension_value('extended_key_usage', [id_icao_cscaMasterListSigningKey]) #icao 9303-p12 p20, p27
 
             # Verify certificate conforms to the ICAO specifications 
             if nc_verification:

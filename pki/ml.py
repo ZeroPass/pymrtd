@@ -3,11 +3,9 @@ import asn1crypto.core as asn1
 
 from .x509 import CscaCertificate, MasterListSignerCertificate
 from .cms import SignedData, SignedDataError
+from .oids import id_icao_cscaMasterList
 
 from typing import NoReturn
-
-
-id_icao_cscaMasterList = asn1.ObjectIdentifier('2.23.136.1.1.2')  # ICAO 9303-12-p26
 
 
 class CertList(asn1.SetOf):
@@ -40,7 +38,7 @@ class CscaMasterListError(Exception):
     pass
 
 class CscaMasterList():
-    cms.ContentType._map[id_icao_cscaMasterList.dotted] = 'icaoCscaMasterList'
+    cms.ContentType._map[id_icao_cscaMasterList] = 'icaoCscaMasterList'
     cms.EncapsulatedContentInfo._oid_specs['icaoCscaMasterList'] = CscaList
 
     def __init__(self, cms_bytes):
@@ -56,7 +54,7 @@ class CscaMasterList():
         if cver != 'v3': # ICAO 9303-12-p25
             raise CscaMasterListError("Invalid SignedData version: {}, should be 'v3'".format(cver))
 
-        if self._sd.contentType != id_icao_cscaMasterList:
+        if self._sd.contentType.dotted != id_icao_cscaMasterList:
             raise CscaMasterListError("Invalid encapContentInfo type: {}, should be '{}'".format(econt_type, id_icao_cscaMasterList.dotted))
 
         if self._sd.content.version != 0: # ICAO 9303-12-p27
