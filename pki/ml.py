@@ -55,7 +55,7 @@ class CscaMasterList():
             raise CscaMasterListError("Invalid SignedData version: {}, should be 'v3'".format(cver))
 
         if self._sd.contentType.dotted != id_icao_cscaMasterList:
-            raise CscaMasterListError("Invalid encapContentInfo type: {}, should be '{}'".format(econt_type, id_icao_cscaMasterList.dotted))
+            raise CscaMasterListError("Invalid encapContentInfo type: {}, should be '{}'".format(self._sd.contentType.dotted, id_icao_cscaMasterList))
 
         if self._sd.content.version != 0: # ICAO 9303-12-p27
             raise CscaMasterListError("Unsupported encapContentInfo version: {}, should be 0".format(self._sd.version))
