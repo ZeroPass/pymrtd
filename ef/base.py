@@ -106,8 +106,8 @@ class ElementaryFile(asn1.Asn1Value):
                 if isinstance(self._content, (asn1.Sequence, asn1.SequenceOf)):
                     self._content._parse_children(recurse=True)
             except (ValueError, TypeError) as e:
-                from asn1crypto._typing import type_name
+                from asn1crypto._types import type_name
                 self._content = None
                 args   = e.args[1:]
-                e.args = (e.args[0] + '\n    while parsing {}'.format(type_name(self))) + args
+                e.args = (e.args[0] + '\n    while parsing {}'.format(type_name(self)),) + args
                 raise e
