@@ -225,16 +225,25 @@ class PublicKey:
         return True
 
 
+class AAPublicKey(PublicKey):
+    '''' Represents eMRTD Active Authentication public key '''
 
+    def verifySignature(self, message: bytes, signature: bytes, sigAlgo: Optional[SignatureAlgorithm] = None) -> bool:
         """
         Verifies if signature is valid using AA public key.
         :param message: Message to verify signature against
         :param signature:
+        :param sigAlgo: Signature algorithm used to produce signature. (ECC only)
         :return: True if signature is valid, otherwise False
         """
 
-        if isinstance(self._pub_key, rsa.RSAPublicKey):
+        if self.isRsaKey():
             v = iso9796e2.Dss1Verifier(self._pub_key)
             return v.verifySignature(message, signature)
+        elif self.isEcKey():
+            # WARNING: THIS SCOPE WAS TESTED WITH ECDSA SIGNATURE NOT FROM eMRTD IC
+            if sigAlgo is None:
+                raise ValueError("Missing required param 'sigAlgo'")
+            return super().verifySignature(message, signature, sigAlgo)
         else:
-            raise NotImplementedError("ECDSA is not implemented yet")
+            raise ValueError("Unsupported digital signature scheme")
