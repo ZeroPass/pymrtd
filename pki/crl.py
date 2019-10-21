@@ -9,7 +9,7 @@ from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy import create_engine
 
 from .x509 import CscaCertificate
-from .sig_utils import verify_sig
+from .cert_utils import verify_sig
 from pymrtd.data.storage.storageManager import Connection
 from pymrtd.settings import *
 

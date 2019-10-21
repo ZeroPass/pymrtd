@@ -3,7 +3,7 @@ from asn1crypto.util import int_from_bytes
 from asn1crypto.keys import PublicKeyInfo
 
 from .base import ElementaryFile
-from pymrtd.pki import keys, oids, sig_utils
+from pymrtd.pki import keys, oids
 
 from typing import Union
 

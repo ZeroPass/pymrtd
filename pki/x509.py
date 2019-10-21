@@ -2,7 +2,7 @@ from asn1crypto import x509
 import asn1crypto.core as asn1
 
 from .oids import id_icao_cscaMasterListSigningKey
-from .sig_utils import verify_cert_sig
+from .cert_utils import verify_cert_sig
 
 from datetime import datetime
 
