@@ -5,24 +5,15 @@
     Python Version: 3.6
 '''
 
-from sqlalchemy import Column, Integer, String, MetaData, Table, DateTime
-from sqlalchemy.orm import mapper
-
 from .x509 import CscaCertificate
 from .cert_utils import verify_sig
-from pymrtd.data.storage.storageManager import Connection
-from pymrtd.settings import *
+from settings import *
 from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
-from datetime import  datetime
 
 from asn1crypto.crl import CertificateList
 
-from sqlalchemy import inspect
-
 import datetime
-import enum
-import pickle
 
 """
 CRL: \
@@ -42,17 +33,6 @@ class CertificateRevocationListError(Exception):
 
 class CertificateRevocationList(CertificateList):
     """Class; object that stores Certificate Revocation List (CRL) and has supporting functions"""
-    #__tablename__ = 'CertificationRevocationList'
-    #id = None
-    #crlObj = None #Column(String)
-    #hashOfCrlObj = Column(String)
-    #countryName = Column(String, primary_key=True)
-    #size = Column(Integer)
-    #validStart = Column(DateTime)
-    #validEnd = Column(DateTime)
-    #signatureAlgorithm = Column(String)
-    #signatureHashAlgorithm = Column(String)
-
     #def __init__(self, crl: crl):
     #    """With initialization crl needs to be provided"""
     #    self.crlObj = crl
@@ -127,72 +107,4 @@ class CertificateRevocationList(CertificateList):
     def verify(self, issuer: CscaCertificate) ->bool:
         """Function that check if crl is signed by provided CSCA"""
         raise NotImplementedError()
-
-class CertificateRevocationListStorage(object):
-    """Class for interaaction between code structure and database"""
-    _object = None
-    _issuerCountry = None
-    _size = None
-    _thisUpdate = None
-    _nextUpdate = None
-    _signatureAlgorithm = None
-    _signatureHashAlgorithm = None
-    _fingerprint = None
-
-    def __init__(self, crl: CertificateRevocationList):
-        """Initialization class with serialization of CRL"""
-        self.size = crl.size
-        self.issuerCountry = crl.issuerCountry
-        self.thisUpdate = crl.thisUpdate
-        self.nextUpdate = crl.nextUpdate
-        self.signatureAlgorithm = crl.signatureAlgorithm
-        self.signatureHashAlgorithm = crl.signatureHashAlgorithm
-        self.serializeCRL(crl)
-
-    def serializeCRL(self, crl: CertificateRevocationList):
-        """Function serialize CRL object to sequence"""
-        self.object = crl.dump()
-
-    def getObject(self) -> CertificateRevocationList:
-        """Returns crl object"""
-        return CertificateRevocationList.load(self.object)
-
-
-"""
-Column('id', Integer, primary_key=True),
-                            Column('issuerCountry', String),
-                            Column('size', Integer),
-                            Column('validStart', DateTime),
-                            Column('validEnd', DateTime),
-                            Column('signatureAlgorithm', String),
-                            Column('signatureHashAlgorithm', String)
-                            )
-                            """
-
-#
-#Storage management functions
-#
-from pymrtd.data.storage.storageManager import Connection
-
-def writeToDB_CRL(crl: CertificateRevocationList, connection: Connection):
-    """Write to database with ORM"""
-    try:
-        logger.info("Writing CRL object to database. Country: " + crl.issuerCountry)
-        crls = CertificateRevocationListStorage(crl)
-        connection.getSession().add(crls)
-        connection.getSession().commit()
-
-    except Exception as e:
-        raise CertificateRevocationListError("Problem with writing the object")
-
-def readFromDB_CRL(issuerCountry: str, connection: Connection) -> CertificateRevocationList:
-    """Reading from database"""
-    try:
-        logger.info("Reading CRL object from database. Country:" + issuerCountry)
-        connection.getSession().query(CertificateRevocationListStorage).count()
-        ter = connection.getSession().query(CertificateRevocationListStorage).all()[connection.getSession().query(CertificateRevocationListStorage).count()-1]
-        ter1 = ter.getObject()
-
-    except Exception as e:
-        raise CertificateRevocationListError("Problem with writing the object")
 

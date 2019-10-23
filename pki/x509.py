@@ -2,6 +2,7 @@ from asn1crypto import x509
 import asn1crypto.core as asn1
 from .cert_utils import verify_cert_sig
 from datetime import datetime
+from settings import *
 
 id_icao_cscaMasterList = asn1.ObjectIdentifier('2.23.136.1.1.2')  # ICAO 9303-12-p26
 
@@ -183,7 +184,7 @@ class MasterListSignerCertificate(Certificate):
 
 
 class DocumentSignerCertificate(Certificate):
-    """ Document Signer Certificate (DSC) which should be used to verify SOD data file in eMRTD """
+    """ Document Signer Certificate (DSC) which should be used to verify SOD database file in eMRTD """
 
     def verify(self, issuing_cert: x509.Certificate, nc_verification = False) -> bool:
         """
