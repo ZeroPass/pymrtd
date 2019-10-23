@@ -7,9 +7,6 @@
 
 from .x509 import CscaCertificate
 from .cert_utils import verify_sig
-from settings import *
-from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
 
 from asn1crypto.crl import CertificateList
 
@@ -32,28 +29,7 @@ class CertificateRevocationListError(Exception):
     pass
 
 class CertificateRevocationList(CertificateList):
-    """Class; object that stores Certificate Revocation List (CRL) and has supporting functions"""
-    #def __init__(self, crl: crl):
-    #    """With initialization crl needs to be provided"""
-    #    self.crlObj = crl
-    #    self.hashOfCrlObj = self.calculateHashOfObj(crl)
-    #    self.countryName = crl.issuer.native['country_name']
-    #    self.size = len(crl['tbs_cert_list']['revoked_certificates'])
-    #    self.validStart = crl['tbs_cert_list']['this_update']
-    #    self.validEnd = crl['tbs_cert_list']['next_update']
-    #    self.signatureAlgorithm = crl['tbs_cert_list']['signature']['algorithm']
-    #    self.signatureHashAlgorithm = self.calculateHashOfSignatureAlgorithm(crl['tbs_cert_list']['signature']['algorithm'])
-
-
-    #def calculateHashOfSignatureAlgorithm(self, signatureAlgorithm: CscaCertificate) -> str:
-    #    """Calculate hash of signature algorithm"""
-    #    logger.debug("Calculated value of signature algorithm")
-    #    raise NotImplementedError()
-
-    def verify(self, issuer: CscaCertificate):
-        """Function verifies if crl is signed by provided issuer CSCA"""
-        verify_sig(issuer, self['tbs_cert_list'].dump(), self['signature'], self['signature_algorithm'])
-        
+    """Class; object that stores Certificate Revocation List (CRL) and has supporting functions """
 
     @property
     def issuerCountry(self) -> str:
@@ -90,7 +66,6 @@ class CertificateRevocationList(CertificateList):
     def signatureHashAlgorithm(self) -> str:
         """It returns hash of signature algorithm"""
         hash_algo = self['signature_algorithm'].hash_algo
-        logger.debug("Signature hash algorithm: " + hash_algo)
         return hash_algo
 
     @property
@@ -99,12 +74,6 @@ class CertificateRevocationList(CertificateList):
         fp = self.sha256.hex()
         return fp
 
-    def calculateHashOfSignatureAlgorithm(self, signatureAlgorithm: CscaCertificate) -> str:
-        """Calculate hash of signature algorithm"""
-        logger.debug("Calculated value of signature algorithm")
-        raise NotImplementedError()
-
-    def verify(self, issuer: CscaCertificate) ->bool:
-        """Function that check if crl is signed by provided CSCA"""
-        raise NotImplementedError()
-
+    def verify(self, issuer: CscaCertificate):
+        """ Function verifies if crl is signed by provided issuer CSCA """
+        verify_sig(issuer, self['tbs_cert_list'].dump(), self['signature'], self['signature_algorithm'])
