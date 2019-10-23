@@ -5,7 +5,6 @@ from .oids import id_icao_cscaMasterListSigningKey
 from .cert_utils import verify_cert_sig
 
 from datetime import datetime
-from settings import *
 
 class CertificateVerificationError(Exception):
     pass
@@ -184,7 +183,7 @@ class MasterListSignerCertificate(Certificate):
 
 
 class DocumentSignerCertificate(Certificate):
-    """ Document Signer Certificate (DSC) which should be used to verify SOD database file in eMRTD """
+    """ Document Signer Certificate (DSC) which should be used to verify SOD data file in eMRTD """
 
     def verify(self, issuing_cert: x509.Certificate, nc_verification = False) -> bool:
         """
