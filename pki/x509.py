@@ -1,10 +1,11 @@
 from asn1crypto import x509
 import asn1crypto.core as asn1
+
+from .oids import id_icao_cscaMasterListSigningKey
 from .cert_utils import verify_cert_sig
+
 from datetime import datetime
 from settings import *
-
-id_icao_cscaMasterList = asn1.ObjectIdentifier('2.23.136.1.1.2')  # ICAO 9303-12-p26
 
 class CertificateVerificationError(Exception):
     pass
@@ -163,6 +164,7 @@ class MasterListSignerCertificate(Certificate):
             CscaCertificate.load(self.dump()).verify(issuing_cert, nc_verification)
         else:
             super().verify(issuing_cert, nc_verification)
+            super()._require_extension_value('extended_key_usage', [id_icao_cscaMasterListSigningKey]) #icao 9303-p12 p20, p27
 
             # Verify certificate conforms to the ICAO specifications 
             if nc_verification:
@@ -178,8 +180,6 @@ class MasterListSignerCertificate(Certificate):
                     'digital_signature' in key_usage,
                     "Missing field 'digitalSignature' in KeyUsage"
                 )
-
-                super()._require_extension_value('extended_key_usage', [id_icao_cscaMasterList.dotted]) #icao 9303-p12 p20, p27
 
 
 

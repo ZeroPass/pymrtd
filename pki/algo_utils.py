@@ -2,16 +2,18 @@ from asn1crypto.algos import SignedDigestAlgorithm
 from cryptography.hazmat.primitives import hashes
 
 _STR_TO_HASH_ALGO = {
-    'md5'      : hashes.MD5(),
-    'sha1'     : hashes.SHA1(),
-    'sha224'   : hashes.SHA224(),
-    'sha256'   : hashes.SHA256(),
-    'sha384'   : hashes.SHA384(),
-    'sha512'   : hashes.SHA512(),
-    'sha3_224' : hashes.SHA3_224(),
-    'sha3_256' : hashes.SHA3_256(),
-    'sha3_384' : hashes.SHA3_384(),
-    'sha3_512' : hashes.SHA3_512(),
+    'md5'        : hashes.MD5(),
+    'sha1'       : hashes.SHA1(),
+    'sha224'     : hashes.SHA224(),
+    'sha256'     : hashes.SHA256(),
+    'sha384'     : hashes.SHA384(),
+    'sha512'     : hashes.SHA512(),
+    'sha512_224' : hashes.SHA512_224(),
+    'sha512_256' : hashes.SHA512_256(),
+    'sha3_224'   : hashes.SHA3_224(),
+    'sha3_256'   : hashes.SHA3_256(),
+    'sha3_384'   : hashes.SHA3_384(),
+    'sha3_512'   : hashes.SHA3_512(),
 }
 
 def get_hash_algo_by_name(hash_algo: str):

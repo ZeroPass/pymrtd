@@ -7,6 +7,7 @@ from pymrtd.pki import algo_utils, cert_utils, x509
 
 from typing import List, NoReturn, Optional, Union
 
+
 class SignedDataError(Exception):
     pass
 
@@ -82,7 +83,7 @@ class SignedData(cms.SignedData):
         ''' 
         Verifies every SignerInfo object and the digital signature over content.
         On failure SignedDataError exception is risen.
-        @param (Optional) List of signing certificates
+        :param certificateList: (Optional) List of signing certificates
         '''
 
         for sidx, si in enumerate(self.signerInfos):
