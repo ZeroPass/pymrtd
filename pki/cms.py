@@ -8,17 +8,39 @@ from pymrtd.pki import algo_utils, cert_utils, x509
 from typing import List, NoReturn, Optional, Union
 
 
-class SignedDataError(Exception):
+def cms_register_content_type(name, oid):
+    cms.ContentType._map[oid] = name
+    if cms.ContentType._reverse_map is None:
+        cms.ContentType._reverse_map = { name : oid }
+    else:
+        cms.ContentType._reverse_map[name] = oid
+
+
+def cms_register_encap_content_info_type(name, oid, type):
+    cms_register_content_type(name, oid)
+    cms.EncapsulatedContentInfo._oid_specs[name] = type
+
+
+class MrtdSignedDataError(Exception):
     pass
 
-class SignedData(cms.SignedData):
-    _certificate_type = x509.Certificate
-    cms.CertificateSet._child_spec = _certificate_type
-    CertList = Union[List[_certificate_type], cms.CertificateSet]
+
+class MrtdSignedData(cms.SignedData):
+    _certificate_spec = x509.Certificate
+
+    class CertificateSetOf(cms.CertificateSet):
+        pass
+
+    _fields = [ 
+        *cms.SignedData._fields[0:3], 
+        ('certificates', CertificateSetOf, {'implicit': 0, 'optional': True}),
+        *cms.SignedData._fields[4:]
+    ]
+
+    CertList = Union[List[_certificate_spec], CertificateSetOf]
 
     def __init__(self, value=None, default=None, **kwargs):
-        cms.CertificateSet._child_spec = SignedData._certificate_type
-        SignedData.CertList = Union[List[SignedData._certificate_type], cms.CertificateSet]
+        self.CertificateSetOf._child_spec  = self._certificate_spec
         super().__init__(value, default, **kwargs)
 
     @property
@@ -47,13 +69,13 @@ class SignedData(cms.SignedData):
     def version(self) -> cms.CMSVersion:
         return self['version']
 
-    def getCertificateBySNI(self, sni: cms.IssuerAndSerialNumber) -> _certificate_type:
+    def getCertificateBySNI(self, sni: cms.IssuerAndSerialNumber) -> _certificate_spec:
         ''' Returns signer certificate identified by serial number and issuer '''
-        return SignedData._get_signer_cert_by_sni(self.certificates, sni)
+        return self.__class__._get_signer_cert_by_sni(self.certificates, sni)
 
-    def getCertificateByKeyId(self, keyId: bytes)  -> _certificate_type:
+    def getCertificateByKeyId(self, keyId: bytes)  -> _certificate_spec:
         ''' Returns signer certificate identified by subject key identifier '''
-        return SignedData._get_signer_cert_by_keyid(self.certificates, keyId)
+        return self.__class__._get_signer_cert_by_keyid(self.certificates, keyId)
 
     def getHasherBySidx(self, sidx) -> hashes.Hash:
         ''' Returns hashes.Hash object specified in SignerInfo returned from SignerInfos list by its index. '''
@@ -82,7 +104,7 @@ class SignedData(cms.SignedData):
     def verify(self, certificateList: Optional[CertList] = []) -> NoReturn:
         ''' 
         Verifies every SignerInfo object and the digital signature over content.
-        On failure SignedDataError exception is risen.
+        On failure MrtdSignedDataError exception is risen.
         :param certificateList: (Optional) List of signing certificates
         '''
 
@@ -91,20 +113,20 @@ class SignedData(cms.SignedData):
                 sni = si['sid'].chosen
                 c = self.getCertificateBySNI(sni)
                 if c is None:
-                    c = SignedData._get_signer_cert_by_sni(certificateList, sni)
+                    c = self.__class__._get_signer_cert_by_sni(certificateList, sni)
             elif si['version'].native == 'v3':
                 keyid = si['sid'].native
                 c = self.getCertificateByKeyId(keyid)
                 if c is None:
-                    c = SignedData._get_signer_cert_by_keyid(certificateList, keyid)
+                    c = self.__class__._get_signer_cert_by_keyid(certificateList, keyid)
             else:
-                raise SignedDataError("Invalid SignerInfo version at sidx: {}".format(sidx))
+                raise MrtdSignedDataError("Invalid SignerInfo version at sidx: {}".format(sidx))
 
             if c is None:
-                raise SignedDataError("Signer Certificate not found")
+                raise MrtdSignedDataError("Signer Certificate not found")
             
             if 'signed_attrs' not in si:
-                raise SignedDataError("Missing field 'signed_attrs' in signer infos")
+                raise MrtdSignedDataError("Missing field 'signed_attrs' in signer infos")
             sa = si['signed_attrs']
 
             # Verify content
@@ -118,18 +140,18 @@ class SignedData(cms.SignedData):
                 elif a['type'].native == 'content_type':
                     ct = a['values'][0]
                     if ct != self.contentType:
-                        raise SignedDataError("signed content type doesn't match actual content type")
+                        raise MrtdSignedDataError("signed content type doesn't match actual content type")
 
             if md is None:
-                raise SignedDataError("Missing 'message_digest' signed attribute")
+                raise MrtdSignedDataError("Missing 'message_digest' signed attribute")
 
             if sig_time is not None and  not c.isValidOn(sig_time):
-                raise SignedDataError("Invalid signing time")
+                raise MrtdSignedDataError("Invalid signing time")
 
             h = self.getHasherBySidx(sidx)
             h.update(self.content.dump())
             if h.finalize() != md:
-                raise SignedDataError("Content digest doesn't match signed digest")
+                raise MrtdSignedDataError("Content digest doesn't match signed digest")
 
             # Make sure sa is asn1 SET type (DER tag 0x31)
             sa.tag    = 17
@@ -139,7 +161,7 @@ class SignedData(cms.SignedData):
             signature = si['signature'].native
             sig_algo  = self.getSigAlgoBySidx(sidx)
             if not cert_utils.verify_sig(c, sa.dump(force=True), signature, sig_algo):
-                raise SignedDataError("Signature verification failed")
+                raise MrtdSignedDataError("Signature verification failed")
 
 
     def _get_signer_cert_by_sni(cert_list: CertList, sni: cms.IssuerAndSerialNumber):
@@ -153,3 +175,11 @@ class SignedData(cms.SignedData):
             if c.key_identifier == keyid:
                 return c
         return None
+
+
+class MrtdContentInfo(cms.ContentInfo):
+    _signed_data_spec = MrtdSignedData
+
+    def __init__(self, value=None, default=None, **kwargs):
+        self._oid_specs['signed_data'] = self._signed_data_spec
+        super().__init__(value, default, **kwargs)

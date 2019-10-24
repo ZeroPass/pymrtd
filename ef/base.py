@@ -12,12 +12,12 @@ class ElementaryFileError(ValueError):
     pass
 
 class ElementaryFile(asn1.Asn1Value):
-    content_spec = None
+    _content_spec = None
 
     def __init__(self, class_=None, tag=None, method=None, contents=None, spec=None, **kwargs):
 
         if spec:
-            self.content_spec = spec
+            self._content_spec = spec
 
         super().__init__(class_=class_, tag=tag, contents=contents, *kwargs)
         self.method = method
@@ -84,7 +84,7 @@ class ElementaryFile(asn1.Asn1Value):
     def _parse_content(self):
         '''
         Parses the contents and generates Asn1Value content objects based on the
-        definitions from content_spec.
+        definitions from _content_spec.
         :raises:
             ValueError - when an error occurs parsing content object
         '''
@@ -93,16 +93,16 @@ class ElementaryFile(asn1.Asn1Value):
         if self.contents is None:
             return
 
-        if self.content_spec is not None:
-            if not issubclass(self.content_spec, asn1.Asn1Value):
+        if self._content_spec is not None:
+            if not issubclass(self._content_spec, asn1.Asn1Value):
                 raise ValueError(
                     '''
-                    content_spec must be of a Ans1Value type, not {}
-                    '''.format(repr(self.content_spec))
+                    _content_spec must be of a Ans1Value type, not {}
+                    '''.format(repr(self._content_spec))
                 )
 
             try:
-                self._content = self.content_spec.load(self.contents, strict=True)
+                self._content = self._content_spec.load(self.contents, strict=True)
                 if isinstance(self._content, (asn1.Sequence, asn1.SequenceOf)):
                     self._content._parse_children(recurse=True)
             except (ValueError, TypeError) as e:

@@ -1,8 +1,8 @@
-from asn1crypto import cms
+
 import asn1crypto.core as asn1
 
+from . import cms
 from .x509 import CscaCertificate, MasterListSignerCertificate
-from .cms import SignedData, SignedDataError
 from .oids import id_icao_cscaMasterList
 
 from typing import NoReturn
@@ -34,37 +34,50 @@ class CscaList(asn1.Sequence):
         return super().__getitem__('certList')
 
 
+
+class MlSignedData(cms.MrtdSignedData):
+    _certificate_spec = MasterListSignerCertificate
+    cms.cms_register_encap_content_info_type(
+        'icaoCscaMasterList',
+        id_icao_cscaMasterList, 
+        CscaList
+    )
+
+
+class MlContentInfo(cms.MrtdContentInfo):
+    _signed_data_spec = MlSignedData
+
+
 class CscaMasterListError(Exception):
     pass
 
-class CscaMasterList():
-    cms.ContentType._map[id_icao_cscaMasterList] = 'icaoCscaMasterList'
-    cms.EncapsulatedContentInfo._oid_specs['icaoCscaMasterList'] = CscaList
 
-    def __init__(self, cms_bytes):
-        SignedData._certificate_type = MasterListSignerCertificate
-        ci = cms.ContentInfo.load(cms_bytes)
+class CscaMasterList(MlContentInfo):
 
+    @classmethod
+    def load(cls, encoded_bytes, strict=False):
+        ci = super().load(encoded_bytes, strict=strict)
         ctype = ci['content_type'].native
         if ctype != 'signed_data': # ICAO 9303-12-p25
             raise CscaMasterListError("Invalid master list content type: {}, should be 'signed_data'".format(ctype))
 
-        self._sd = ci['content']
-        #cver = self._sd.version.native
-        cver = self._sd.native['version']
+        ci._sd = ci['content']
+        cver = ci._sd.version.native
         if cver != 'v3': # ICAO 9303-12-p25
             raise CscaMasterListError("Invalid SignedData version: {}, should be 'v3'".format(cver))
 
-        if self._sd.contentType.dotted != id_icao_cscaMasterList:
-            raise CscaMasterListError("Invalid encapContentInfo type: {}, should be '{}'".format(self._sd.contentType.dotted, id_icao_cscaMasterList))
+        if ci._sd.contentType.dotted != id_icao_cscaMasterList:
+            raise CscaMasterListError("Invalid encapContentInfo type: {}, should be '{}'".format(ci._sd.contentType.dotted, id_icao_cscaMasterList))
 
-        if self._sd.content.version != 0: # ICAO 9303-12-p27
-            raise CscaMasterListError("Unsupported encapContentInfo version: {}, should be 0".format(self._sd.version))
+        if ci._sd.content.version != 0: # ICAO 9303-12-p27
+            raise CscaMasterListError("Unsupported encapContentInfo version: {}, should be 0".format(ci._sd.version))
         
-        if len(self._sd.certificates) < 1:
+        if len(ci._sd.certificates) < 1:
             raise CscaMasterListError("No master list signer certificate found") 
 
-        assert isinstance(self._sd.certificates[0], MasterListSignerCertificate)
+        assert isinstance(ci._sd.certificates[0], MasterListSignerCertificate)
+        assert isinstance(ci._sd.content, CscaList)
+        return ci
 
     @property
     def signerCertificates(self):
@@ -84,5 +97,5 @@ class CscaMasterList():
 
         try:
             self._sd.verify()
-        except SignedDataError as e:
+        except cms.MrtdSignedDataError as e:
             raise CscaMasterListError(str(e)) from e

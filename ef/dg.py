@@ -146,7 +146,7 @@ class DataGroup(ElementaryFile):
 
 class DG14(DataGroup):
     tag = 14
-    content_spec = SecurityInfos
+    _content_spec = SecurityInfos
 
     @property
     def aaInfo(self) -> Union[ActiveAuthenticationInfo, None]:
@@ -174,7 +174,7 @@ class DG14(DataGroup):
 
 class DG15(DataGroup):
     tag = 15
-    content_spec = PublicKeyInfo
+    _content_spec = PublicKeyInfo
 
     @property
     def aaPublicKeyInfo(self) -> PublicKeyInfo:

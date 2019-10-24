@@ -1,12 +1,11 @@
 import asn1crypto.core as asn1
 from asn1crypto.algos import DigestAlgorithm
-from asn1crypto import cms
+from asn1crypto.cms import SignerIdentifier
 from asn1crypto.util import int_from_bytes
 
 from .base import ElementaryFile, LDSVersionInfo
 from .dg import DataGroup, DataGroupNumber
-from pymrtd.pki import x509, algo_utils
-from pymrtd.pki.cms import SignedData, SignedDataError
+from pymrtd.pki import algo_utils, cms, oids, x509
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -24,6 +23,7 @@ class LDSSecurityObjectVersion(asn1.Integer):
     def value(self):
         return int_from_bytes(self.contents, signed=True)
 
+
 class DataGroupHash(asn1.Sequence):
     _fields = [
         ('dataGroupNumber', DataGroupNumber),
@@ -37,6 +37,7 @@ class DataGroupHash(asn1.Sequence):
     @property
     def hash(self) -> bytes:
         return self['dataGroupHashValue'].native
+
 
 class DataGroupHashValues(asn1.SequenceOf):
     _child_spec = DataGroupHash
@@ -55,7 +56,7 @@ class DataGroupHashValues(asn1.SequenceOf):
                 return dg
         return None
 
-    
+
 class LDSSecurityObject(asn1.Sequence):
     _fields = [
         ('version', LDSSecurityObjectVersion),
@@ -115,25 +116,38 @@ class LDSSecurityObject(asn1.Sequence):
         return h.finalize() == dgh.hash
 
 
+class SODSignedData(cms.MrtdSignedData):
+    _certificate_spec = x509.DocumentSignerCertificate
+    cms.cms_register_encap_content_info_type(
+        'ldsSecurityObject',
+        oids.id_mrtd_ldsSecurityObject, 
+        LDSSecurityObject
+    )
+
+
+class SODContentInfo(cms.MrtdContentInfo):
+    _signed_data_spec = SODSignedData
+
 
 class SODError(Exception):
     pass
 
-class SOD(ElementaryFile):
-    cms.ContentType._map[id_mrtd_ldsSecurityObject.dotted] = 'ldsSecurityObject'
-    cms.EncapsulatedContentInfo._oid_specs['ldsSecurityObject'] = LDSSecurityObject
-    cms.ContentInfo._oid_specs['signed_data'] = SignedData
 
-    SignedData._certificate_type = x509.DocumentSignerCertificate
-    content_spec = cms.ContentInfo
+class SOD(ElementaryFile):
 
     class_ = 1
     method = 1
     tag    = 23
 
+    _content_spec = SODContentInfo
+
+
     @classmethod
     def load(cls, encoded_bytes, strict=False):
+
+        # Parse parent type
         value = super().load(encoded_bytes, strict=strict)
+
         ci = value.content
         ctype = ci['content_type'].native
         if ctype != 'signed_data': # ICAO 9303-10-p21
@@ -151,6 +165,7 @@ class SOD(ElementaryFile):
             raise SODError("Unsupported LDSSecurityObject version: {}, should be 0 or 1".format(seco.version))
 
         assert isinstance(value._sd.certificates[0], x509.DocumentSignerCertificate) if len(value._sd.certificates) else True
+        assert isinstance(value._sd.content, LDSSecurityObject)
         return value
 
     @property
@@ -163,7 +178,7 @@ class SOD(ElementaryFile):
         return self._sd.content
 
     @property
-    def signers(self) -> List[cms.SignerIdentifier]:
+    def signers(self) -> List[SignerIdentifier]:
         ''' Returns list of signer identifiers which signed this document. '''
         sids = []
         for si in self._sd.signerInfos:
@@ -177,5 +192,5 @@ class SOD(ElementaryFile):
         '''
         try:
             self._sd.verify(issuer_cert if issuer_cert is not None else [])
-        except SignedDataError as e:
+        except cms.MrtdSignedDataError as e:
             raise SODError(str(e)) from e
