@@ -76,6 +76,7 @@ class SecurityInfo(asn1.Choice):
     ]
 
     def validate(self, class_, tag, contents):
+        """ this function select proper SecurityInfo choice index based on OID """
         oid = asn1.ObjectIdentifier.load(contents).dotted
 
         self._choice = 0
