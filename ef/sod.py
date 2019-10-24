@@ -13,8 +13,6 @@ from cryptography.hazmat.primitives import hashes
 from typing import List, NoReturn, Union
 
 
-id_mrtd_ldsSecurityObject = asn1.ObjectIdentifier('2.23.136.1.1.1')
-
 
 class LDSSecurityObjectVersion(asn1.Integer):
     _map = {
@@ -146,8 +144,8 @@ class SOD(ElementaryFile):
         if cver != 'v1' and cver != 'v3' and cver != 'v4': # RFC3369
             raise CscaMasterListError("Invalid SignedData version: {}".format(cver))
 
-        if value._sd.contentType != id_mrtd_ldsSecurityObject:
-            raise SODError("Invalid encapContentInfo type: {}, should be {}".format(id_mrtd_ldsSecurityObject.dotted, id_ldsSecurityObject.dotted))
+        if value._sd.contentType.dotted != oids.id_mrtd_ldsSecurityObject:
+            raise SODError("Invalid encapContentInfo type: {}, should be {}".format(value._sd.contentType.dotted, oids.id_mrtd_ldsSecurityObject))
 
         if 1 < value.ldsSecurityObject.version.value < 0:
             raise SODError("Unsupported LDSSecurityObject version: {}, should be 0 or 1".format(seco.version))
