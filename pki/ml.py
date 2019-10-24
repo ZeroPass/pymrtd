@@ -50,7 +50,8 @@ class CscaMasterList():
             raise CscaMasterListError("Invalid master list content type: {}, should be 'signed_data'".format(ctype))
 
         self._sd = ci['content']
-        cver = self._sd.version.native
+        #cver = self._sd.version.native
+        cver = self._sd.native['version']
         if cver != 'v3': # ICAO 9303-12-p25
             raise CscaMasterListError("Invalid SignedData version: {}, should be 'v3'".format(cver))
 
