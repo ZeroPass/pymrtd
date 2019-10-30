@@ -5,8 +5,6 @@ from . import cms
 from .x509 import CscaCertificate, MasterListSignerCertificate
 from .oids import id_icao_cscaMasterList
 
-from typing import NoReturn
-
 
 class CertList(asn1.SetOf):
     _child_spec = CscaCertificate
@@ -89,7 +87,7 @@ class CscaMasterList(MlContentInfo):
         ''' Returns list of CSCAs '''
         return self._sd.content
 
-    def verify(self) -> NoReturn:
+    def verify(self) -> None:
         ''' 
         Verifies every SignerInfo object and the digital signature over content.
         On verification failure a CscaMasterListError exception is risen.
