@@ -9,7 +9,7 @@ from pymrtd.pki import algo_utils, cms, oids, x509
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from typing import List, NoReturn, Union
+from typing import List, Union
 
 
 
@@ -185,7 +185,7 @@ class SOD(ElementaryFile):
             sids.append(si['sid'])
         return sids
 
-    def verify(self, issuer_cert: x509.DocumentSignerCertificate = None, nc_verification = False) -> NoReturn:
+    def verify(self, issuer_cert: x509.DocumentSignerCertificate = None, nc_verification = False) -> None:
         ''' 
         Verifies every stored digital signature made over signed LdsSecurityObject.
         :raises: SODError - if verification fails or other error occurs.

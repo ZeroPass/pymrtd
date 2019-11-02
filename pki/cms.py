@@ -5,7 +5,7 @@ from cryptography.hazmat.primitives import hashes
 
 from pymrtd.pki import algo_utils, cert_utils, x509
 
-from typing import List, NoReturn, Optional, Union
+from typing import List, Optional, Union
 
 
 def cms_register_content_type(name, oid):
@@ -101,7 +101,7 @@ class MrtdSignedData(cms.SignedData):
         sig_algo  = si['signature_algorithm']
         return algo_utils.update_sig_algo_if_no_hash_algo(sig_algo, hash_algo)
 
-    def verify(self, certificateList: Optional[CertList] = []) -> NoReturn:
+    def verify(self, certificateList: Optional[CertList] = []) -> None:
         ''' 
         Verifies every SignerInfo object and the digital signature over content.
         On failure MrtdSignedDataError exception is risen.
