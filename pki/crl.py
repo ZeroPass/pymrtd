@@ -41,7 +41,6 @@ class CertificateRevocationList(CertificateList):
     def size(self) -> int:
         """Function returns size of CRL"""
         size = len(self['tbs_cert_list']['revoked_certificates'])
-        logger.debug("Getting size of CRL: " + str(size))
         return size
 
     @property
