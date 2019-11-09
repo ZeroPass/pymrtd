@@ -3,6 +3,7 @@ from asn1crypto.util import int_from_bytes
 from asn1crypto.keys import PublicKeyInfo
 
 from .base import ElementaryFile
+from .mrz import MachineReadableZone
 from pymrtd.pki import keys, oids
 
 from typing import Union
@@ -142,6 +143,19 @@ class DataGroup(ElementaryFile):
     @property
     def number(self) -> DataGroupNumber:
         return DataGroupNumber(self.tag)
+
+
+class DG1(DataGroup):
+    tag = 1
+    _content_spec = MachineReadableZone
+
+    @property
+    def mrz(self):
+        return self.content
+
+    @property
+    def native(self):
+        return { 'mrz': self.mrz.native }
 
 
 class DG14(DataGroup):
