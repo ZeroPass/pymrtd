@@ -31,10 +31,18 @@ class Certificate(x509.Certificate):
         """Function returns authority key of certificate"""
         return self.authority_key_identifier
 
+    @property
+    def notValidBefore(self) -> datetime:
+        return self['tbs_certificate']['validity']['not_before'].native
+
+    @property
+    def notValidAfter(self) -> datetime:
+        return self['tbs_certificate']['validity']['not_after'].native
+
     def isValidOn(self, dateTime: datetime):
         ''' Verifies if certificate is valid on specific date-time '''
-        nvb = self['tbs_certificate']['validity']['not_before'].native
-        nva = self['tbs_certificate']['validity']['not_after'].native
+        nvb = self.notValidBefore
+        nva = self.notValidAfter
         dateTime = dateTime.replace(tzinfo=nvb.tzinfo)
         return nvb < dateTime < nva
 
