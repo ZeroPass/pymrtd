@@ -17,7 +17,7 @@ class Certificate(x509.Certificate):
 
     @property
     def issuerCountry(self) -> str:
-        """Function returns county of certificate issuer"""
+        """Function returns country of certificate issuer"""
         country = self.issuer.native['country_name']
         return country
 
