@@ -103,22 +103,22 @@ class SecurityInfos(asn1.SetOf):
 
 class DataGroupNumber(asn1.Integer):
     _map = {
-        1: 'dataGroup1',
-        2: 'dataGroup2',
-        3: 'dataGroup3',
-        4: 'dataGroup4',
-        5: 'dataGroup5',
-        6: 'dataGroup6',
-        7: 'dataGroup7',
-        8: 'dataGroup8',
-        9: 'dataGroup9',
-        10: 'dataGroup10',
-        11: 'dataGroup11',
-        12: 'dataGroup12',
-        13: 'dataGroup13',
-        14: 'dataGroup14',
-        15: 'dataGroup15',
-        16: 'dataGroup16'
+        1: 'DG1',
+        2: 'DG2',
+        3: 'DG2',
+        4: 'DG4',
+        5: 'DG5',
+        6: 'DG6',
+        7: 'DG7',
+        8: 'DG8',
+        9: 'DG9',
+        10: 'DG10',
+        11: 'DG11',
+        12: 'DG12',
+        13: 'DG13',
+        14: 'DG14',
+        15: 'DG15',
+        16: 'DG16'
     }
 
     @property
