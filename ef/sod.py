@@ -101,11 +101,10 @@ class LDSSecurityObject(asn1.Sequence):
 
     def contains(self, dg: DataGroup) -> bool:
         '''' 
-        Returns True if DataGroupHashValues data group with the same hash, else False
+        Returns True if DataGroupHashValues has matching hash of data group, else False
         :param dg:
             Data group to find and compare hash value of
         '''
-
         assert isinstance(dg, DataGroup)
         dgh = self.find(dg.number)
         if dgh is None:
