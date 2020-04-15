@@ -193,7 +193,7 @@ class MasterListSignerCertificate(Certificate):
 class DocumentSignerCertificate(Certificate):
     """ Document Signer Certificate (DSC) which should be used to verify SOD data file in eMRTD """
 
-    def verify(self, issuing_cert: x509.Certificate, nc_verification = False) -> bool:
+    def verify(self, issuing_cert: x509.Certificate, nc_verification = False):
         """
         Verifies certificate has all required fields and that issuing certificate did issue this certificate.
         On failure CertificateVerificationError exception is risen.
