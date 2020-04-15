@@ -68,7 +68,9 @@ if not csca.isValidOn(utils.time_now()):
   raise Exception("DSC has expired")
   
 try:
-  dsc.verify(issuing_cert=csca)
+  # Note: certificate conformance check (nc_verification) is not done by default
+  #       because not all countries follow the standard strictly
+  dsc.verify(issuing_cert=csca, nc_verification=True/False)   
   sod.verify() # optionally, a list of DSC can be provided
 except:
   raise Exception("MRTD turstchain verification failed")
@@ -79,7 +81,7 @@ Example of verifying MRTD digital signature:
 sod  = SOD.load(...)
 dg15 = DG15.load(...)
 
-# First DG15 was issued by country
+# First verify DG15 was issued by country
 # Note: SOD object should be validated into trustchain at this point
 if not sod.ldsSecurityObject.contains(dg15):
   raise Exception("Can't verify signature, invalid EF.DG15 file")
