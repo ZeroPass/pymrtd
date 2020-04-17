@@ -53,7 +53,7 @@ Example of validating MRTD trustchain:
 # 1. Parse SOD and get signing certificates (DSC, CSCA)
 sod = SOD.load(...)
 if len(sod.dsCertificates) == 0: # SOD is not required to store it's signer DSC certificate. 
-  raise Exception("Can't verify SOD signature, no DSC found")
+  raise Exception("Can't verify SOD, no DSC found")
   
 dsc  = sod.dsCertificates[0] # SOD can store more than 1 DSC certificate by definition
 csca = fetchCSCAofDSC(sod.dsCertificates[0])
@@ -64,14 +64,14 @@ if csca is None:
 if not csca.isValidOn(utils.time_now()):
   raise Exception("CSCA has expired")
   
-if not csca.isValidOn(utils.time_now()):
+if not dsc.isValidOn(utils.time_now()):
   raise Exception("DSC has expired")
   
 try:
   # Note: certificate conformance check (nc_verification) is not done by default
   #       because not all countries follow the standard strictly
   dsc.verify(issuing_cert=csca, nc_verification=True/False)   
-  sod.verify() # optionally, a list of DSC can be provided
+  sod.verify() # optionally, a list of DSC certificates can be provided
 except:
   raise Exception("MRTD turstchain verification failed")
 ```
@@ -86,7 +86,7 @@ dg15 = DG15.load(...)
 if not sod.ldsSecurityObject.contains(dg15):
   raise Exception("Can't verify signature, invalid EF.DG15 file")
 
-# If ECC signature, get ECC signature algorithm from EF.DG14
+# If ECC signature, get ECC signature algorithm from EF.DG14 file
 sigAlgo = None
 if dg15.aaPublicKey.isEcKey():
   dg14 = SOD.load(...)
