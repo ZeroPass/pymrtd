@@ -74,7 +74,7 @@ class SignatureAlgorithm(algos.SignedDigestAlgorithm):
         raise ValueError('Hash algorithm not known for '.format(algorithm))
 
 
-class ECDSA_X962_Sig(asn1.Sequence):
+class ECDSA_X962_Signature(asn1.Sequence):
     ''' Represents X9.64 ECDSA signature format '''
 
     _fields = [
@@ -154,7 +154,7 @@ class PublicKey:
 
         # Convert plain ECDSA sig to x9.62 format
         if sigAlgo.isPlain:
-            signature = ECDSA_X962_Sig.fromPlain(signature).dump()
+            signature = ECDSA_X962_Signature.fromPlain(signature).dump()
 
         hash_algo = algo_utils.get_hash_algo_by_name(sigAlgo.hashAlgo)
 

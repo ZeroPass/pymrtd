@@ -8,7 +8,7 @@ def verify_sig(signing_cert: x509.Certificate, msg_bytes: bytes, sig_bytes: byte
     """
     pub_key = keys.PublicKey.load(signing_cert.public_key.dump())
     if pub_key.isEcKey():
-        sig_bytes = keys.ECDSA_X962_Sig.load(sig_bytes).toPlain()
+        sig_bytes = keys.ECDSA_X962_Signature.load(sig_bytes).toPlain()
         sig_algo = keys.SignatureAlgorithm({ 'algorithm' : sig_algo.hash_algo + "_plain_ecdsa"})
     return pub_key.verifySignature(msg_bytes, sig_bytes, sig_algo)
 
