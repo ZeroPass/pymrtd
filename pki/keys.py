@@ -6,7 +6,7 @@ from cryptography import exceptions as cryptography_exceptions
 
 from asn1crypto import algos, core as asn1
 from pymrtd.pki import algo_utils, iso9796e2, oids
-from typing import Optional 
+from typing import Optional
 
 
 class SignatureAlgorithmId(algos.SignedDigestAlgorithmId):
@@ -29,7 +29,7 @@ class SignatureAlgorithmId(algos.SignedDigestAlgorithmId):
 
 class SignatureAlgorithm(algos.SignedDigestAlgorithm):
     _fields  = [
-        ('algorithm', SignatureAlgorithmId), 
+        ('algorithm', SignatureAlgorithmId),
         *algos.SignedDigestAlgorithm._fields[1:]
     ]
 
@@ -106,7 +106,6 @@ class ECDSA_X962_Sig(asn1.Sequence):
                 s = b'\x00' * int(lr - ls) + s
         return r + s
 
-
 class PublicKey:
     ''' General abstract class which represents public key for PKI '''
 
@@ -142,11 +141,11 @@ class PublicKey:
         """
         Verifies digital signature made over message against public key.
         :param message: Message to verify signature against
-        :param signature: Raw signature bytes. 
+        :param signature: Raw signature bytes.
                           ECDSA signature can be bytes of x9.62 format or plain format (R||S).
         :param sigAlgo: Signature algorithm used to produce signature.
         :return: True if signature is valid, otherwise False
-        :raises:  *Exception - if other then InvalidSignature exception is risen. 
+        :raises:  *Exception - if other then InvalidSignature exception is risen.
         """
 
         # Convert parent type algos.SignedDigestAlgorithm to SignatureAlgorithm
@@ -177,7 +176,7 @@ class PublicKey:
 
                 mgf1_hash_algo = sig_algo_params['mask_gen_algorithm']['parameters']['algorithm'].native
                 mgf1_hash_algo = algo_utils.get_hash_algo_by_name(mgf1_hash_algo)
-                return Verifier(lambda: 
+                return Verifier(lambda:
                     pub_key.verify(
                         signature,
                         message,
@@ -188,22 +187,22 @@ class PublicKey:
                         hash_algo
                 ))
             else:
-                return Verifier(lambda: 
+                return Verifier(lambda:
                     pub_key.verify(signature, message, padding.PKCS1v15(), hash_algo)
                 )
 
         def get_ecdsa_verifier(pub_key: ecc.EllipticCurvePublicKey):
-            return Verifier(lambda: 
+            return Verifier(lambda:
                 pub_key.verify(signature, message, ecc.ECDSA(hash_algo))
             )
 
         def get_eddsa_verifier(pub_key: ed25519.Ed25519PublicKey):
-            return Verifier(lambda: 
+            return Verifier(lambda:
                 pub_key.verify(signature, message)
             )
 
         def get_dsa_verifier(pub_key: ecc.EllipticCurvePublicKey):
-            return Verifier(lambda: 
+            return Verifier(lambda:
                 pub_key.verify(signature, message, hash_algo)
             )
 
@@ -216,7 +215,7 @@ class PublicKey:
             verifier = get_eddsa_verifier(self._pub_key)
         else:
             verifier = get_dsa_verifier(self._pub_key)
-    
+
         # Verify sig
         try:
             verifier.verify()
@@ -247,3 +246,24 @@ class AAPublicKey(PublicKey):
             return super().verifySignature(message, signature, sigAlgo)
         else:
             raise ValueError("Unsupported digital signature scheme")
+
+# Monkey patch _EllipticCurvePublicKey to allow unnamed curves (explicit params)
+from cryptography.hazmat.backends.openssl.ec import (
+    _EllipticCurvePublicKey,
+    _mark_asn1_named_ec_curve,
+    _ec_key_curve_sn,
+    _sn_to_elliptic_curve
+)
+
+def _new_ec_pub_key_init(self, backend, ec_key_cdata, evp_pkey):
+    self._backend = backend
+    self._ec_key = ec_key_cdata
+    self._evp_pkey = evp_pkey
+    try:
+        _mark_asn1_named_ec_curve(backend, ec_key_cdata)
+        sn = _ec_key_curve_sn(backend, ec_key_cdata)
+        self._curve = _sn_to_elliptic_curve(backend, sn)
+    except:
+        self._curve = None
+
+_EllipticCurvePublicKey.__init__ = _new_ec_pub_key_init
