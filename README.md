@@ -22,8 +22,7 @@ e.g.: [MRZ](https://github.com/ZeroPass/PassID-Server/blob/11a211266ac69616e2863
  pip3 install asn1crypto
 ```
 
-* [cryptography](https://github.com/pyca/cryptography)     
-*Note: Library has to be patched see [README](https://github.com/ZeroPass/PassID-Server/blob/master/src/pymrtd/pki/README.md) of pki module*
+* [cryptography](https://github.com/pyca/cryptography)
 ```
   pip3 install cryptography
 ```
