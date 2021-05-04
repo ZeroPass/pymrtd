@@ -1,10 +1,3 @@
-'''
-    File name: crl.py
-    Author: ZeroPass - Nejc Skerjanc
-    License: MIT lincense
-    Python Version: 3.6
-'''
-
 from .x509 import CscaCertificate
 from .cert_utils import verify_sig
 
