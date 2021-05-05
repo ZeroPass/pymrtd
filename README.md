@@ -14,7 +14,7 @@ e.g.: [MRZ](https://github.com/ZeroPass/port-py-server/blob/11a211266ac69616e286
   - [CSCA master list](https://github.com/ZeroPass/port-py-server/blob/949d44b8bebe6d79cb529e8f7d9f922cb39e48a5/src/pymrtd/pki/ml.py#L40-L87)
   - Functions and procedures to verify digital signatures including RSA [ISO9796-2 DSS1](https://github.com/ZeroPass/port-py-server/blob/949d44b8bebe6d79cb529e8f7d9f922cb39e48a5/src/pymrtd/pki/iso9796e2.py)
 ## Dependencies
-* [Python 3.7 or higher](https://www.python.org/downloads/).<br>
+* [Python 3.9 or higher](https://www.python.org/downloads/).<br>
   Check this [website](https://wiki.python.org/moin/BeginnersGuide/Download) for installation guidelines.
 
 * [asn1crypto](https://github.com/wbond/asn1crypto)
