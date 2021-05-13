@@ -24,7 +24,7 @@ class MachineReadableZone(asn1.OctetString):
         return self.native[key]
 
     @property
-    def country(self) -> str:
+    def country(self) -> str: # Issuing country
         return self['country']
 
     @property
@@ -42,6 +42,10 @@ class MachineReadableZone(asn1.OctetString):
     @property
     def document_number(self) -> str:
         return self['document_number']
+
+    @property
+    def gender(self) -> str:
+        return self['gender']
 
     @property
     def name(self) -> str:
@@ -92,7 +96,7 @@ class MachineReadableZone(asn1.OctetString):
         self._parsed['optional_data_1']       = self._read(15, 15)
         self._parsed['date_of_birth']         = self._read_date(30, 6)
         self._parsed['date_of_birth_cd']      = self._read_int(36, 1) # document dob digit
-        self._parsed['sex']                   = self._read(37, 1)
+        self._parsed['gender']             = self._read(37, 1)
         self._parsed['date_of_expiry']        = self._read_date(38, 6)
         self._parsed['date_of_expiry_cd']     = self._read_int(44, 1) # document doe digit
         self._parsed['nationality']           = self._read(45, 3)
@@ -115,7 +119,7 @@ class MachineReadableZone(asn1.OctetString):
         self._parsed['nationality']           = self._read(46, 3)
         self._parsed['date_of_birth']         = self._read_date(49, 6)
         self._parsed['date_of_birth_cd']      = self._read_int(55, 1) # document dob digit
-        self._parsed['sex']                   = self._read(56, 1)
+        self._parsed['gender']             = self._read(56, 1)
         self._parsed['date_of_expiry']        = self._read_date(57, 6)
         self._parsed['date_of_expiry_cd']     = self._read_int(63, 1) # document doe digit
         self._parsed['optional_data']         = self._read(64, 7)
@@ -130,7 +134,7 @@ class MachineReadableZone(asn1.OctetString):
         self._parsed['nationality']           = self._read(54, 3)
         self._parsed['date_of_birth']         = self._read_date(57, 6)
         self._parsed['date_of_birth_cd']      = self._read_int(63, 1) # document dob digit
-        self._parsed['sex']                   = self._read(64, 1)
+        self._parsed['gender']             = self._read(64, 1)
         self._parsed['date_of_expiry']        = self._read_date(65, 6)
         self._parsed['date_of_expiry_cd']     = self._read_int(71, 1) # document doe digit
         self._parsed['optional_data']         = self._read(72, 14)
