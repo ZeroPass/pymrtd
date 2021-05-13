@@ -1,5 +1,6 @@
 import asn1crypto.core as asn1
 from datetime import datetime, date
+from typing import Optional
 
 class MachineReadableZone(asn1.OctetString):
     class_ = 1
@@ -28,7 +29,7 @@ class MachineReadableZone(asn1.OctetString):
         return self['country']
 
     @property
-    def date_of_birth(self) -> date:
+    def date_of_birth(self) -> Optional[date]: # Could be None if date is not known
         return self['date_of_birth']
 
     @property
@@ -152,6 +153,8 @@ class MachineReadableZone(asn1.OctetString):
 
     def _read_date(self, idx, len):
         date = self._read(idx, len)
+        if '<' in date: # In case of unknown date of birth
+            return None
         return datetime.strptime(date, '%y%m%d').date()
 
     def _read_name_identifiers(self, idx, size):
