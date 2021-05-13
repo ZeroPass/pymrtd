@@ -9,17 +9,17 @@ class MachineReadableZone(asn1.OctetString):
     @classmethod
     def load(cls, encoded_data: bytes, strict=False):
         v = super().load(encoded_data, strict)
-        clen = len(v.contents) 
+        clen = len(v.contents)
         if clen == 90:
-            v.format = 'td1'
+            v.type = 'td1'
         elif clen == 72:
-            v.format = 'td2'
+            v.type = 'td2'
         elif clen == 88:
-            v.format = 'td3'
+            v.type = 'td3'
         else:
-            ValueError("Unknown MRZ format")
+            raise ValueError("Unknown MRZ type")
         return v
-    
+
     def __getitem__(self, key):
         return self.native[key]
 
@@ -62,7 +62,7 @@ class MachineReadableZone(asn1.OctetString):
 
     @property
     def optional_data(self) -> str:
-        if self.format == 'td1':
+        if self.type == 'td1':
             return self['optional_data_2']
         return self['optional_data']
 
@@ -75,14 +75,14 @@ class MachineReadableZone(asn1.OctetString):
 
     def parse(self):
         self._parsed = {}
-        if self.format == 'td1':
+        if self.type == 'td1':
             self._parse_td1()
-        elif self.format == 'td2':
+        elif self.type == 'td2':
             self._parse_td2()
-        elif self.format == 'td3':
+        elif self.type == 'td3':
             self._parse_td3()
         else:
-            ValueError("Cannot parse unknown MRZ format")
+            raise ValueError("Cannot parse unknown MRZ type")
 
     def _parse_td1(self):
         self._parsed['document_code']         = self._read(0, 2)
