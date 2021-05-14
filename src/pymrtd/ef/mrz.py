@@ -104,12 +104,7 @@ class MachineReadableZone(asn1.OctetString):
         self._parsed['optional_data_2']       = self._read(48, 11)
         self._parsed['composite_check_digit'] = self._read_int(59, 1)
         self._parsed['name_identifiers']      = self._read_name_identifiers(60, 30)
-
-        # doc 9303 p10 page 30
-        if self._parsed['document_number_cd'] == '<' and len(self._parsed['optional_data_1']) > 0:
-            self._parsed['document_number'] += self._parsed['optional_data_1'][:-1]
-            self._parsed['document_number_cd'] = self._parsed['optional_data_1'][-1]
-            self._parsed['optional_data_1'] = ""
+        self._parseExtendedDocumentNumber()
 
     def _parse_td2(self):
         self._parsed['document_code']         = self._read(0, 2)
@@ -125,6 +120,7 @@ class MachineReadableZone(asn1.OctetString):
         self._parsed['date_of_expiry_cd']     = self._read_int(63, 1) # document doe digit
         self._parsed['optional_data']         = self._read(64, 7)
         self._parsed['composite_check_digit'] = self._read_int(71, 1)
+        self._parseExtendedDocumentNumber()
 
     def _parse_td3(self):
         self._parsed['document_code']         = self._read(0, 2)
@@ -141,6 +137,14 @@ class MachineReadableZone(asn1.OctetString):
         self._parsed['optional_data']         = self._read(72, 14)
         self._parsed['check_digit']           = self._read_int(86, 1)
         self._parsed['composite_check_digit'] = self._read_int(87, 1)
+
+    def _parseExtendedDocumentNumber(self):
+        # doc 9303 p10 page 30
+        fn_opt_data = 'optional_data_1' if self.type == 'td1' else 'optional_data'
+        if self._parsed['document_number_cd'] == '<' and len(self._parsed[fn_opt_data]) > 0:
+            self._parsed['document_number']   += self._parsed[fn_opt_data][:-1]
+            self._parsed['document_number_cd'] = self._parsed[fn_opt_data][-1]
+            self._parsed[fn_opt_data]          = ""
 
     def _read_with_filter(self, idx, len):
         return self.contents[idx: idx + len].decode('ascii')
