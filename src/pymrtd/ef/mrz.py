@@ -102,7 +102,7 @@ class MachineReadableZone(asn1.OctetString):
         self._parsed['date_of_expiry_cd']     = self._read_int(44, 1) # document doe digit
         self._parsed['nationality']           = self._read(45, 3)
         self._parsed['optional_data_2']       = self._read(48, 11)
-        self._parsed['composite_check_digit'] = self._read_int(59, 1)
+        self._parsed['composite_cd']       = self._read_int(59, 1)
         self._parsed['name_identifiers']      = self._read_name_identifiers(60, 30)
         self._parseExtendedDocumentNumber()
 
@@ -119,7 +119,7 @@ class MachineReadableZone(asn1.OctetString):
         self._parsed['date_of_expiry']        = self._read_date(57, 6)
         self._parsed['date_of_expiry_cd']     = self._read_int(63, 1) # document doe digit
         self._parsed['optional_data']         = self._read(64, 7)
-        self._parsed['composite_check_digit'] = self._read_int(71, 1)
+        self._parsed['composite_cd']       = self._read_int(71, 1)
         self._parseExtendedDocumentNumber()
 
     def _parse_td3(self):
@@ -135,8 +135,8 @@ class MachineReadableZone(asn1.OctetString):
         self._parsed['date_of_expiry']        = self._read_date(65, 6)
         self._parsed['date_of_expiry_cd']     = self._read_int(71, 1) # document doe digit
         self._parsed['optional_data']         = self._read(72, 14)
-        self._parsed['check_digit']           = self._read_int(86, 1)
-        self._parsed['composite_check_digit'] = self._read_int(87, 1)
+        self._parsed['optional_data_cd']   = self._read_int(86, 1)
+        self._parsed['composite_cd']       = self._read_int(87, 1)
 
     def _parseExtendedDocumentNumber(self):
         # doc 9303 p10 page 30
