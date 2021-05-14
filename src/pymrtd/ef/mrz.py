@@ -1,5 +1,5 @@
 import asn1crypto.core as asn1
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import Optional
 
 class MachineReadableZone(asn1.OctetString):
@@ -90,51 +90,51 @@ class MachineReadableZone(asn1.OctetString):
             raise ValueError("Cannot parse unknown MRZ type")
 
     def _parse_td1(self):
-        self._parsed['document_code']         = self._read(0, 2)
-        self._parsed['country']               = self._read(2, 3)
-        self._parsed['document_number']       = self._read(5, 9)
-        self._parsed['document_number_cd']    = self._read_with_filter(14, 1) # document number check digit, could be char '<'
-        self._parsed['optional_data_1']       = self._read(15, 15)
-        self._parsed['date_of_birth']         = self._read_date(30, 6)
-        self._parsed['date_of_birth_cd']      = self._read_int(36, 1) # document dob digit
+        self._parsed['document_code']      = self._read(0, 2)
+        self._parsed['country']            = self._read(2, 3)
+        self._parsed['document_number']    = self._read(5, 9)
+        self._parsed['document_number_cd'] = self._read_with_filter(14, 1) # document number check digit, could be char '<'
+        self._parsed['optional_data_1']    = self._read(15, 15)
+        self._parsed['date_of_birth']      = self._read_date_of_birth(30, 6)
+        self._parsed['date_of_birth_cd']   = self._read_int(36, 1) # document dob digit
         self._parsed['gender']             = self._read(37, 1)
-        self._parsed['date_of_expiry']        = self._read_date(38, 6)
-        self._parsed['date_of_expiry_cd']     = self._read_int(44, 1) # document doe digit
-        self._parsed['nationality']           = self._read(45, 3)
-        self._parsed['optional_data_2']       = self._read(48, 11)
+        self._parsed['date_of_expiry']     = self._read_date_of_expiry(38, 6)
+        self._parsed['date_of_expiry_cd']  = self._read_int(44, 1) # document doe digit
+        self._parsed['nationality']        = self._read(45, 3)
+        self._parsed['optional_data_2']    = self._read(48, 11)
         self._parsed['composite_cd']       = self._read_int(59, 1)
-        self._parsed['name_identifiers']      = self._read_name_identifiers(60, 30)
+        self._parsed['name_identifiers']   = self._read_name_identifiers(60, 30)
         self._parseExtendedDocumentNumber()
 
     def _parse_td2(self):
-        self._parsed['document_code']         = self._read(0, 2)
-        self._parsed['country']               = self._read(2, 3)
-        self._parsed['name_identifiers']      = self._read_name_identifiers(5, 31)
-        self._parsed['document_number']       = self._read(36, 9)
-        self._parsed['document_number_cd']    = self._read_with_filter(45, 1) # document number check digit
-        self._parsed['nationality']           = self._read(46, 3)
-        self._parsed['date_of_birth']         = self._read_date(49, 6)
-        self._parsed['date_of_birth_cd']      = self._read_int(55, 1) # document dob digit
+        self._parsed['document_code']      = self._read(0, 2)
+        self._parsed['country']            = self._read(2, 3)
+        self._parsed['name_identifiers']   = self._read_name_identifiers(5, 31)
+        self._parsed['document_number']    = self._read(36, 9)
+        self._parsed['document_number_cd'] = self._read_with_filter(45, 1) # document number check digit
+        self._parsed['nationality']        = self._read(46, 3)
+        self._parsed['date_of_birth']      = self._read_date_of_birth(49, 6)
+        self._parsed['date_of_birth_cd']   = self._read_int(55, 1) # document dob digit
         self._parsed['gender']             = self._read(56, 1)
-        self._parsed['date_of_expiry']        = self._read_date(57, 6)
-        self._parsed['date_of_expiry_cd']     = self._read_int(63, 1) # document doe digit
-        self._parsed['optional_data']         = self._read(64, 7)
+        self._parsed['date_of_expiry']     = self._read_date_of_expiry(57, 6)
+        self._parsed['date_of_expiry_cd']  = self._read_int(63, 1) # document doe digit
+        self._parsed['optional_data']      = self._read(64, 7)
         self._parsed['composite_cd']       = self._read_int(71, 1)
         self._parseExtendedDocumentNumber()
 
     def _parse_td3(self):
-        self._parsed['document_code']         = self._read(0, 2)
-        self._parsed['country']               = self._read(2, 3)
-        self._parsed['name_identifiers']      = self._read_name_identifiers(5, 39)
-        self._parsed['document_number']       = self._read(44, 9)
-        self._parsed['document_number_cd']    = self._read_with_filter(53, 1) # document number check digit
-        self._parsed['nationality']           = self._read(54, 3)
-        self._parsed['date_of_birth']         = self._read_date(57, 6)
-        self._parsed['date_of_birth_cd']      = self._read_int(63, 1) # document dob digit
+        self._parsed['document_code']      = self._read(0, 2)
+        self._parsed['country']            = self._read(2, 3)
+        self._parsed['name_identifiers']   = self._read_name_identifiers(5, 39)
+        self._parsed['document_number']    = self._read(44, 9)
+        self._parsed['document_number_cd'] = self._read_with_filter(53, 1) # document number check digit
+        self._parsed['nationality']        = self._read(54, 3)
+        self._parsed['date_of_birth']      = self._read_date_of_birth(57, 6)
+        self._parsed['date_of_birth_cd']   = self._read_int(63, 1) # document dob digit
         self._parsed['gender']             = self._read(64, 1)
-        self._parsed['date_of_expiry']        = self._read_date(65, 6)
-        self._parsed['date_of_expiry_cd']     = self._read_int(71, 1) # document doe digit
-        self._parsed['optional_data']         = self._read(72, 14)
+        self._parsed['date_of_expiry']     = self._read_date_of_expiry(65, 6)
+        self._parsed['date_of_expiry_cd']  = self._read_int(71, 1) # document doe digit
+        self._parsed['optional_data']      = self._read(72, 14)
         self._parsed['optional_data_cd']   = self._read_int(86, 1)
         self._parsed['composite_cd']       = self._read_int(87, 1)
 
@@ -160,6 +160,19 @@ class MachineReadableZone(asn1.OctetString):
         if '<' in date: # In case of unknown date of birth
             return None
         return datetime.strptime(date, '%y%m%d').date()
+
+    def _read_date_of_birth(self, idx, len):
+        date = self._read_date(idx, len)
+        if date is not None and date > datetime.today().date(): # reduce date for 100 years if greater then current date
+            days_per_year = 365.25
+            date -= timedelta(days=(100 * days_per_year))
+        return date
+
+    def _read_date_of_expiry(self, idx, len):
+        date = self._read_date(idx, len)
+        if date is None:
+            raise ValueError('Invalid date of expiry in MRZ data')
+        return date
 
     def _read_name_identifiers(self, idx, size):
         name_field = self._read(idx, size)
