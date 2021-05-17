@@ -31,8 +31,8 @@ class MrtdSignedData(cms.SignedData):
     class CertificateSetOf(cms.CertificateSet):
         pass
 
-    _fields = [ 
-        *cms.SignedData._fields[0:3], 
+    _fields = [
+        *cms.SignedData._fields[0:3],
         ('certificates', CertificateSetOf, {'implicit': 0, 'optional': True}),
         *cms.SignedData._fields[4:]
     ]
@@ -80,13 +80,13 @@ class MrtdSignedData(cms.SignedData):
     def getHasherBySidx(self, sidx) -> hashes.Hash:
         ''' Returns hashes.Hash object specified in SignerInfo returned from SignerInfos list by its index. '''
 
-        si = self.signerInfos[sidx] 
+        si = self.signerInfos[sidx]
         hash_algo = si['digest_algorithm']['algorithm'].native
         h = algo_utils.get_hash_algo_by_name(hash_algo)
         return hashes.Hash(h, backend=default_backend())
 
     def getSignatureBySidx(self, sidx) -> bytes:
-        si = selfsignerInfos[sidx]
+        si = self.signerInfos[sidx]
         return si['signature'].native
 
     def getSignedAttributesBySidx(self, sidx) -> cms.CMSAttributes:
@@ -96,13 +96,13 @@ class MrtdSignedData(cms.SignedData):
     def getSigAlgoBySidx(self, sidx) -> algos.SignedDigestAlgorithm:
         ''' Returns SignedDigestAlgorithm specified in SignerInfo returned from SignerInfos list by its index. '''
 
-        si = self.signerInfos[sidx] 
+        si = self.signerInfos[sidx]
         hash_algo = si['digest_algorithm']['algorithm'].native
         sig_algo  = si['signature_algorithm']
         return algo_utils.update_sig_algo_if_no_hash_algo(sig_algo, hash_algo)
 
     def verify(self, certificateList: Optional[CertList] = []) -> None:
-        ''' 
+        '''
         Verifies every SignerInfo object and the digital signature over content.
         On failure MrtdSignedDataError exception is risen.
         :param certificateList: (Optional) List of signing certificates
@@ -124,7 +124,7 @@ class MrtdSignedData(cms.SignedData):
 
             if c is None:
                 raise MrtdSignedDataError("Signer Certificate not found")
-            
+
             if 'signed_attrs' not in si:
                 raise MrtdSignedDataError("Missing field 'signed_attrs' in signer infos")
             sa = si['signed_attrs']
