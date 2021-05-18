@@ -57,11 +57,12 @@ class ElementaryFile(asn1.Asn1Value):
                 .format(cls.tag,value.tag)
             )
 
+        value.content # Force parsing of content. This is done in order for any invalid content to rise an exception
         return value
 
     @property
     def content(self):
-        ''' Returns content object of a type content_type ''' 
+        ''' Returns content object of a type content_type '''
         if self._content is None:
             self._parse_content()
         return self._content
