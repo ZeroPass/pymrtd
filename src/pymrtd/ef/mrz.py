@@ -68,7 +68,9 @@ class MachineReadableZone(asn1.OctetString):
     @property
     def optional_data(self) -> str:
         if self.type == 'td1':
-            return self['optional_data_2']
+            return self['optional_data_1'] \
+                if len(self['optional_data_1']) \
+                else self['optional_data_2']
         return self['optional_data']
 
     @property
