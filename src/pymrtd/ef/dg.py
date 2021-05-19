@@ -73,7 +73,7 @@ class SecurityInfo(asn1.Choice):
         ('aa_info', ActiveAuthenticationInfo),
         ('chip_auth_info', ChipAuthenticationInfo),
         ('chip_auth_pub_key_info', ChipAuthenticationPublicKeyInfo)
-        #Note: Missing PACEDomainParameterInfo and PACEInfo 
+        #Note: Missing PACEDomainParameterInfo and PACEInfo
     ]
 
     def validate(self, class_, tag, contents):
@@ -105,7 +105,7 @@ class DataGroupNumber(asn1.Integer):
     _map = {
         1: 'DG1',
         2: 'DG2',
-        3: 'DG2',
+        3: 'DG3',
         4: 'DG4',
         5: 'DG5',
         6: 'DG6',
@@ -134,6 +134,16 @@ class DataGroupNumber(asn1.Integer):
 
     def __ne__(self, other) -> bool:
         return not self.__eq__(other)
+
+    def set(self, value):
+        if isinstance(value, int):
+            if value == 21: # DG2 tag
+                value = 2
+            elif value == 22: # DG4 tag
+                value = 4
+            elif (value not in DataGroupNumber._map):
+                raise ValueError('Invalid data group number')
+        super().set(value)
 
 
 class DataGroup(ElementaryFile):
@@ -183,7 +193,6 @@ class DG14(DataGroup):
 
         # Get signature algorithm
         return keys.SignatureAlgorithm({ 'algorithm' : aai['signature_algorithm'] })
-
 
 
 class DG15(DataGroup):
