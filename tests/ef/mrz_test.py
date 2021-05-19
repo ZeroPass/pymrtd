@@ -5,7 +5,7 @@ from datetime import date
 def _td_as_der(td) -> bytes:
     td = "".join("{:02x}".format(ord(c)) for c in td)
     td = '5F1F{:02x}{}'.format(int(len(td) /2), td)
-    return bytes(bytearray.fromhex(td))
+    return bytes.fromhex(td)
 
 def test_mrz_parse():
     # tv from ICAO 9303 part 10 A.2.1
@@ -18,6 +18,7 @@ def test_mrz_parse():
     assert mrz.document_number          == 'XI85935F8'
     assert mrz['document_number_cd']    == '6'
     assert mrz['optional_data_1']       == '999999990'
+    assert mrz.optional_data            == '999999990'
     assert mrz.date_of_birth            == date( 1972, 8, 14 )
     assert mrz['date_of_birth_cd']      == 8
     assert mrz.gender                   == 'F'
@@ -34,12 +35,13 @@ def test_mrz_parse():
     tv  = _td_as_der("I<UTOSTEVENSON<<PETER<JOHN<<<<<<<<<<D23145890<UTO3407127M95071227349<<<8")
     mrz = ef.MachineReadableZone.load(tv)
     assert mrz.dump()                   == tv
-    assert mrz.type                   == 'td2'
+    assert mrz.type                     == 'td2'
     assert mrz.document_code            == 'I'
     assert mrz.country                  == 'UTO'
     assert mrz.document_number          == 'D23145890734'
     assert mrz['document_number_cd']    == '9'
     assert mrz['optional_data']         == ''
+    assert mrz.optional_data            == ''
     assert mrz.date_of_birth            == date( 1934, 7, 12 )
     assert mrz['date_of_birth_cd']      == 7
     assert mrz.gender                   == 'M'
@@ -61,6 +63,7 @@ def test_mrz_parse():
     assert mrz.document_number          == 'L898902C3'
     assert mrz['document_number_cd']    == '6'
     assert mrz['optional_data']         == 'ZE184226B'
+    assert mrz.optional_data            == 'ZE184226B'
     assert mrz['optional_data_cd']      == 1
     assert mrz.date_of_birth            == date( 1974, 8, 12 )
     assert mrz['date_of_birth_cd']      == 2
@@ -73,6 +76,33 @@ def test_mrz_parse():
     assert mrz.name                     == 'ANNA MARIA'
     assert mrz.surname                  == 'ERIKSSON'
 
+    # tv from BSI TR-03105_Part5-1 - 4.4 Configuration of default EAC+AA passport
+    # https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen/TechnischeRichtlinien/TR03105/TR-03105_Part5-1.pdf
+    # Note: The optional data cd was changed to 0 from '<'
+    tv  = _td_as_der("P<D<<MUSTERMANN<<ERIKA<<<<<<<<<<<<<<<<<<<<<<C11T002JM4D<<9608122F2310314<<<<<<<<<<<<<<04")
+    mrz = ef.MachineReadableZone.load(tv)
+    assert mrz.dump()                   == tv
+    assert mrz.type                     == 'td3'
+    assert mrz.document_code            == 'P'
+    assert mrz.country                  == 'D'
+    assert mrz.document_number          == 'C11T002JM'
+    assert mrz['document_number_cd']    == '4'
+    assert mrz['optional_data']         == ''
+    assert mrz.optional_data            == ''
+    assert mrz['optional_data_cd']      == 0
+    assert mrz.date_of_birth            == date( 1996, 8, 12 )
+    assert mrz['date_of_birth_cd']      == 2
+    assert mrz.gender                   == 'F'
+    assert mrz.date_of_expiry           == date( 2023, 10, 31 )
+    assert mrz['date_of_expiry_cd']     == 4
+    assert mrz.nationality              == 'D'
+    assert mrz['composite_cd']          == 4
+    assert mrz['name_identifiers']      == ( 'MUSTERMANN', 'ERIKA' )
+    assert mrz.name                     == 'ERIKA'
+    assert mrz.surname                  == 'MUSTERMANN'
+
+
+    # Fuzz tests
     with pytest.raises(TypeError, match="encoded_data must be a byte string, not str"):
         ef.MachineReadableZone.load('')
     with pytest.raises(ValueError, match="Insufficient data - 2 bytes requested but only 0 available"):
