@@ -129,7 +129,7 @@ class DataGroupNumber(asn1.Integer):
         if isinstance(other, int):
             return self.value == other
         elif isinstance(other, DataGroupNumber):
-            return self.value == other.value
+            return super().__eq__(other)
         return False
 
     def __ne__(self, other) -> bool:
