@@ -80,7 +80,7 @@ class LDSSecurityObject(asn1.Sequence):
         return self['dataGroupHashValues']
 
     @property
-    def ldsVerion(self) -> Union[LDSVersionInfo, None]:
+    def ldsVersion(self) -> Union[LDSVersionInfo, None]:
         ''' Returns the version of LDS. It can return None if version of this object is 0 '''
         return self['ldsVersionInfo']
 
@@ -90,7 +90,7 @@ class LDSSecurityObject(asn1.Sequence):
         return hashes.Hash(h, backend=default_backend())
 
     def find(self, dgNumber: DataGroupNumber) -> Union[DataGroupHash, None]:
-        '''' 
+        ''''
         Returns DataGroupHash if DataGroupHashValues contains specific data group number, else None
         :param dgNumber:
             Data group number to find DataGroupHash object
@@ -100,7 +100,7 @@ class LDSSecurityObject(asn1.Sequence):
         return self.dgHashes.find(dgNumber)
 
     def contains(self, dg: DataGroup) -> bool:
-        '''' 
+        ''''
         Returns True if DataGroupHashValues has matching hash of data group, else False
         :param dg:
             Data group to find and compare hash value of
@@ -119,7 +119,7 @@ class SODSignedData(cms.MrtdSignedData):
     _certificate_spec = x509.DocumentSignerCertificate
     cms.cms_register_encap_content_info_type(
         'ldsSecurityObject',
-        oids.id_mrtd_ldsSecurityObject, 
+        oids.id_mrtd_ldsSecurityObject,
         LDSSecurityObject
     )
 
@@ -155,7 +155,7 @@ class SOD(ElementaryFile):
         value._sd = ci['content']
         cver = value._sd.version.native
         if cver != 'v1' and cver != 'v3' and cver != 'v4': # RFC3369
-            raise CscaMasterListError("Invalid SignedData version: {}".format(cver))
+            raise SODError("Invalid SignedData version: {}".format(cver))
 
         if value._sd.contentType.dotted != oids.id_mrtd_ldsSecurityObject:
             raise SODError("Invalid encapContentInfo type: {}, should be {}".format(value._sd.contentType.dotted, oids.id_mrtd_ldsSecurityObject))
@@ -185,7 +185,7 @@ class SOD(ElementaryFile):
         return sids
 
     def verify(self, issuer_dsc_certs: Optional[List[x509.DocumentSignerCertificate]] = []) -> None:
-        ''' 
+        '''
         Verifies every stored digital signature made over signed LdsSecurityObject.
         :raises: SODError - if verification fails or other error occurs.
         '''
