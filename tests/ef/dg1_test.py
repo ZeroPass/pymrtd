@@ -5,7 +5,7 @@ from pymrtd import ef
 from pymrtd.ef.dg import DataGroupNumber
 
 @pytest.mark.depends(on=[
-    'tests/ef/ef_base_test.py::test_ef_base_parse',
+    'tests/ef/ef_base_test.py::test_ef_base',
     'tests/ef/dg_base_test.py::test_dg_base',
     'tests/ef/mrz_test.py::test_mrz_parse',
 ])

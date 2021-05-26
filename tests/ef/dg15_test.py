@@ -4,7 +4,7 @@ from pymrtd.ef.dg import *
 
 
 @pytest.mark.depends(on=[
-    'tests/ef/ef_base_test.py::test_ef_base_parse',
+    'tests/ef/ef_base_test.py::test_ef_base',
     'tests/ef/dg_base_test.py::test_dg_base',
 ])
 def test_dg15():

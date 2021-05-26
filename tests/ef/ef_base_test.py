@@ -24,4 +24,4 @@ def test_ef_base():
 
     ElementaryFile.method = None
     ElementaryFile.class_ = None
-    ElementaryFile.tag = None
+    ElementaryFile.tag    = None
