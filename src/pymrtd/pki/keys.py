@@ -107,7 +107,7 @@ class ECDSA_X962_Signature(asn1.Sequence):
         return r + s
 
 class PublicKey:
-    ''' General abstract class which represents public key for PKI '''
+    ''' General class which represents public key for PKI '''
 
     _pub_key = None
 
