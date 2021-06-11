@@ -1,7 +1,9 @@
+from typing import Tuple
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric import padding
+from math import ceil
 
 class Dss1VerifierError(Exception):
     pass
@@ -49,47 +51,29 @@ class Dss1Verifier:
         # Recover message representative F
         F = self._recover_F(signature)
 
-        # Check header, left most tw bits must be equal to '01'
-        if ((F[0] & 0xC0) ^ 0x40) != 0:
+        # Verify header
+        if not Dss1Verifier._F_is_valid_header(F):
             raise Dss1VerifierError("Invalid header of recovered message representative")
 
-        # Check that nibble of the trailing byte ends with 0xC
-        k = len(F)
-        if ((F[k - 1] & 0xF) ^ 0xC) != 0:
+        # Verify tail
+        if not Dss1Verifier._F_is_valid_tail(F):
             raise Dss1VerifierError("Invalid trailer field of recovered message representative")
 
-        # Get Hasher
-        t = 1 if F[k - 1] == 0xBC else 2 # trailer field = hash identifier (last 1 - 2 bytes)
-        h = Dss1Verifier._get_hasher(int.from_bytes(F[k - t:], byteorder='big'))
+        # Get trailer size t and hash algorithm
+        t = Dss1Verifier._F_get_t_size(F) # trailer field = hash identifier (last 1 - 2 bytes)
+        hash_algo = Dss1Verifier._F_get_hash_algo(F, t)
 
-        partial_recovery = (F[0] & 0x20) != 0 # bit 5 is set in case of partial recovery
-        pad_len = Dss1Verifier._get_padding_len(F) # pad len in bit count
+        partial_recovery = Dss1Verifier._F_is_partial_recovery(F)
+        pad_len = Dss1Verifier._F_padding_len(F) # pad len in bit count
         if partial_recovery and pad_len >= 9:
             raise Dss1VerifierError("Padding too long")
 
-        # Remove padding bits and calculate M1 length
-        F   = Dss1Verifier._remove_padding(F, pad_len)
-        Lh  = h._algorithm.digest_size
-        Lm1 = len(F) - (Lh + t)
-
-        # Extract M1 and digest H of message M */
-        M1 = F[0 : Lm1]
-        H  = F[Lm1 : Lm1 + Lh]
-
-        # Construct message M 
-        if partial_recovery:
-            M = M1 + message
-        else:
-            M = M1
-            if M != message:
-                raise Dss1VerifierError("Provided message and recovered message don't match")
-
-        # Calculate message digest of M and compare it with digest H.
-        h.update(M)
-        if h.finalize() != H:
+        # Extract M1 & H, construct message M and verify M
+        (M1,H) = Dss1Verifier._F_get_M1_and_H(F, pad_len, t, hash_algo)
+        M = Dss1Verifier._construct_M(M1, message, partial_recovery)
+        if not Dss1Verifier._verify_M(M, H, hash_algo):
             raise Dss1VerifierError("Integrity check of recovered message failed")
         return M1
-
 
     def _recover_F(self, sig: bytes):
         """
@@ -138,7 +122,17 @@ class Dss1Verifier:
 
         return F
 
-    def _get_hasher(T: int):
+    def _construct_M(M1: bytes, M2: bytes, partial_recovery: bool):
+        ''' Constructs message M from M1 and M2 '''
+        if partial_recovery:
+            return M1 + M2
+        else:
+            M = M1
+            if M != M2:
+                raise Dss1VerifierError("Provided message and recovered message don't match")
+            return M
+
+    def _get_hash_algo(T: int) -> hashes.HashAlgorithm:
         hash_algo = None
         if T == Dss1Verifier.TRAILER_IMPLICIT or T == Dss1Verifier.TRAILER_SHA1:
             hash_algo = hashes.SHA1()
@@ -157,30 +151,63 @@ class Dss1Verifier:
 
         if hash_algo is None:
             raise Dss1VerifierError("Unrecognized hash algorithm in signature")
-        return hashes.Hash(hash_algo, backend=default_backend())
+        return hash_algo
 
-    def _get_padding_len(F: bytes):
+    def _F_get_M1_and_H(F: bytes, pad_len: int, t: int, hash_algo: hashes.HashAlgorithm) -> Tuple[bytes, bytes]:
+        ''' Returns tuple message M1 and hash H of message M '''
+        # Remove padding bits
+        F   = Dss1Verifier._F_remove_padding(F, pad_len)
+        Lh  = hash_algo.digest_size
+        Lm1 = len(F)  - (Lh + t)
+        M1  = F[0 : Lm1]
+        H   = F[Lm1 : Lm1 + Lh]
+        return (M1, H)
+
+    def _F_get_hash_algo(F: bytes, t: int):
+        return Dss1Verifier._get_hash_algo(int.from_bytes(F[-t:], byteorder='big'))
+
+    def _F_get_t_size(F: bytes):
+        return 1 if F[-1] == 0xBC else 2 # trailer field = hash identifier (last 1 - 2 bytes)
+
+    def _F_is_valid_header(F: bytes):
+        ''' Check header, left most tw bits must be equal to '01 '''
+        return ((F[0] & 0xC0) ^ 0x40) == 0
+
+    def _F_is_valid_tail(F: bytes):
+        ''' Check that nibble of the trailing byte ends with 0xC '''
+        return ((F[-1] & 0xF) ^ 0xC) == 0
+
+    def _F_is_partial_recovery(F: bytes):
+        return (F[0] & 0x20) == 0x20  # bit 5 is set in case of partial recovery
+
+    def _F_padding_len(F: bytes):
         """ Returns padding length in bit count. """
         c = 0
 
         # If padding is present the right most bit of the left most nibble is 0
         if (F[0] & 0x10) == 0:
             # Operate on nibbles
-            for i in range(len(F) * 4):
+            for i in range(1, len(F) * 4):
                 b = F[int((i * 4) / 8)]
                 n = 0
                 if i % 2 == 0:
                     n = (b >> 4) & 0x0F # left nibble
                 else:
                     n = b & 0xF # right nibble
-
                 c += 1
                 if n != 0xB:
                     break
-        return c * 4;
+        return c * 4
 
-    def _remove_padding(F: bytes, padBitCount: int):
+    def _F_remove_padding(F: bytes, padBitCount: int):
         """:param padBitCount: Number of padding bits """
+        if padBitCount < 1:
+            return F
         nr = int(padBitCount / 4) + 1 # 1 nibble == header
-        br = int(nr * 4 / 8)
+        br = int(ceil(nr * 4 / 8))
         return F[br:]
+
+    def _verify_M(M: bytes, H: bytes, hash_algo: hashes.HashAlgorithm) -> bool:
+        h = hashes.Hash(hash_algo, backend=default_backend())
+        h.update(M)
+        return h.finalize() == H
