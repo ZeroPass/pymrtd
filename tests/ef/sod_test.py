@@ -15,8 +15,8 @@ CERTS_DIR = py.path.local(_dir) /'..'/'pki'/'certs'
     'tests/ef/ef_base_test.py::test_ef_base',
     'tests/ef/dg_base_test.py::test_dg_base',
     'tests/ef/dg1_test.py::test_dg1',
-    'tests/ef/dg1_test.py::test_dg14',
-    'tests/ef/dg1_test.py::test_dg15'
+    #'tests/ef/dg1_test.py::test_dg14',
+    #'tests/ef/dg1_test.py::test_dg15'
 ])
 @pytest.mark.datafiles(
     CERTS_DIR / 'dsc_de_0142fd5cf927.cer',
