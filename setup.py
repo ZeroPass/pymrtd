@@ -24,14 +24,17 @@ setup(
     include_package_data=True,
     python_requires=">=3.9",
     install_requires=[
-          'asn1crypto>=1.4.0',
-          'cryptography>=3.4.7'
-      ],
+        'asn1crypto>=1.4.0',
+        'cryptography>=3.4.7'
+    ],
     extras_require={
         'test': [
             'pytest>=6.2.4',
             'pytest-depends>=1.0.1',
             'pytest-datafiles>=2.0.0'
         ],
-    }
+    },
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest>=6.2.4'],
+    test_suite='tests',
 )
