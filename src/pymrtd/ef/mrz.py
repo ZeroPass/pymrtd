@@ -12,11 +12,11 @@ class MachineReadableZone(asn1.OctetString):
         v = super().load(encoded_data, strict)
         clen = len(v.contents)
         if clen == 90:
-            v.type = 'td1'
+            v._type = 'td1'
         elif clen == 72:
-            v.type = 'td2'
+            v._type = 'td2'
         elif clen == 88:
-            v.type = 'td3'
+            v._type = 'td3'
         else:
             raise ValueError("Unknown MRZ type")
         return v
@@ -79,6 +79,10 @@ class MachineReadableZone(asn1.OctetString):
         if len(ni) > 0:
             return ni[0]
         return ""
+
+    @property
+    def type(self) -> str:
+        return self._type # pylint: disable=maybe-no-member
 
     def parse(self):
         self._parsed = {}
