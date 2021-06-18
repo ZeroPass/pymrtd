@@ -52,7 +52,7 @@ class MrtdSignedData(cms.SignedData):
          return self['encap_content_info']['content_type']
 
     @property
-    def certificates(self) -> CertList :
+    def certificates(self) -> "CertList" :
         ''' Returns the list of certificates which signed signers info. '''
         return self['certificates']
 
@@ -163,13 +163,14 @@ class MrtdSignedData(cms.SignedData):
             if not cert_utils.verify_sig(c, sa.dump(force=True), signature, sig_algo):
                 raise MrtdSignedDataError("Signature verification failed")
 
-
+    @staticmethod
     def _get_signer_cert_by_sni(cert_list: CertList, sni: cms.IssuerAndSerialNumber):
         for c in cert_list:
             if c.serial_number == sni['serial_number'].native and c.issuer == sni['issuer']:
                 return c
         return None
 
+    @staticmethod
     def _get_signer_cert_by_keyid(cert_list: CertList, keyid: bytes):
         for c in cert_list:
             if c.key_identifier == keyid:

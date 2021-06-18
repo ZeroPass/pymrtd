@@ -122,6 +122,7 @@ class Dss1Verifier:
 
         return F
 
+    @staticmethod
     def _construct_M(M1: bytes, M2: bytes, partial_recovery: bool):
         ''' Constructs message M from M1 and M2 '''
         if partial_recovery:
@@ -132,6 +133,7 @@ class Dss1Verifier:
                 raise Dss1VerifierError("Provided message and recovered message don't match")
             return M
 
+    @staticmethod
     def _get_hash_algo(T: int) -> hashes.HashAlgorithm:
         hash_algo = None
         if T == Dss1Verifier.TRAILER_IMPLICIT or T == Dss1Verifier.TRAILER_SHA1:
@@ -153,6 +155,7 @@ class Dss1Verifier:
             raise Dss1VerifierError("Unrecognized hash algorithm in signature")
         return hash_algo
 
+    @staticmethod
     def _F_get_M1_and_H(F: bytes, pad_len: int, t: int, hash_algo: hashes.HashAlgorithm) -> Tuple[bytes, bytes]:
         ''' Returns tuple message M1 and hash H of message M '''
         # Remove padding bits
@@ -163,23 +166,29 @@ class Dss1Verifier:
         H   = F[Lm1 : Lm1 + Lh]
         return (M1, H)
 
+    @staticmethod
     def _F_get_hash_algo(F: bytes, t: int):
         return Dss1Verifier._get_hash_algo(int.from_bytes(F[-t:], byteorder='big'))
 
+    @staticmethod
     def _F_get_t_size(F: bytes):
         return 1 if F[-1] == 0xBC else 2 # trailer field = hash identifier (last 1 - 2 bytes)
 
+    @staticmethod
     def _F_is_valid_header(F: bytes):
         ''' Check header, left most tw bits must be equal to '01 '''
         return ((F[0] & 0xC0) ^ 0x40) == 0
 
+    @staticmethod
     def _F_is_valid_tail(F: bytes):
         ''' Check that nibble of the trailing byte ends with 0xC '''
         return ((F[-1] & 0xF) ^ 0xC) == 0
 
+    @staticmethod
     def _F_is_partial_recovery(F: bytes):
         return (F[0] & 0x20) == 0x20  # bit 5 is set in case of partial recovery
 
+    @staticmethod
     def _F_padding_len(F: bytes):
         """ Returns padding length in bit count. """
         c = 0
@@ -199,6 +208,7 @@ class Dss1Verifier:
                     break
         return c * 4
 
+    @staticmethod
     def _F_remove_padding(F: bytes, padBitCount: int):
         """:param padBitCount: Number of padding bits """
         if padBitCount < 1:
@@ -207,6 +217,7 @@ class Dss1Verifier:
         br = int(ceil(nr * 4 / 8))
         return F[br:]
 
+    @staticmethod
     def _verify_M(M: bytes, H: bytes, hash_algo: hashes.HashAlgorithm) -> bool:
         h = hashes.Hash(hash_algo, backend=default_backend())
         h.update(M)

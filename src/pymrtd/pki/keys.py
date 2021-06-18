@@ -1,13 +1,13 @@
+from asn1crypto import algos, core as asn1
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa, ed25519, ec as ecc
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography import exceptions as cryptography_exceptions
 
-from asn1crypto import algos, core as asn1
 from pymrtd.pki import algo_utils, iso9796e2, oids
 from typing import Optional
-
 
 class SignatureAlgorithmId(algos.SignedDigestAlgorithmId):
     _map = dict(algos.SignedDigestAlgorithmId._map, **{
@@ -53,7 +53,7 @@ class SignatureAlgorithm(algos.SignedDigestAlgorithm):
 
         if algorithm in algo_map:
             return algo_map[algorithm]
-        raise ValueError('Signature algorithm not known for '.format(algorithm))
+        raise ValueError('Signature algorithm not known for {}'.format(algorithm))
 
     @property
     def hashAlgo(self) -> str:
@@ -71,7 +71,7 @@ class SignatureAlgorithm(algos.SignedDigestAlgorithm):
 
         if algorithm in algo_map:
             return algo_map[algorithm]
-        raise ValueError('Hash algorithm not known for '.format(algorithm))
+        raise ValueError('Hash algorithm not known for {}'.format(algorithm))
 
 
 class ECDSA_X962_Signature(asn1.Sequence):
