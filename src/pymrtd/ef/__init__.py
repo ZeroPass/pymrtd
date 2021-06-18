@@ -22,7 +22,7 @@ from .sod import (
 __all__ = [
     "DataGroup",
     "DataGroupNumber",
-    "DG1"
+    "DG1",
     "DG14",
     "DG15",
     "ElementaryFile",
