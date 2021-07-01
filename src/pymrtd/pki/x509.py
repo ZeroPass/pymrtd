@@ -34,11 +34,11 @@ class Certificate(x509.Certificate):
 
     @property
     def notValidBefore(self) -> datetime:
-        return self['tbs_certificate']['validity']['not_before'].native
+        return self.not_valid_before
 
     @property
     def notValidAfter(self) -> datetime:
-        return self['tbs_certificate']['validity']['not_after'].native
+        return self.not_valid_after
 
     def isValidOn(self, dateTime: datetime):
         ''' Verifies if certificate is valid on specific date-time '''
