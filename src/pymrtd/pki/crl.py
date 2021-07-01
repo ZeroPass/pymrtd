@@ -1,9 +1,8 @@
+import datetime
 from .x509 import CscaCertificate
 from .cert_utils import verify_sig
-
-from asn1crypto.crl import CertificateList
-
-import datetime
+from asn1crypto.crl import CertificateList, RevokedCertificates
+from typing import Optional
 
 """
 CRL: \
@@ -35,6 +34,12 @@ class CertificateRevocationList(CertificateList):
         """Function returns size of CRL"""
         size = len(self['tbs_cert_list']['revoked_certificates'])
         return size
+
+    @property
+    def revokedCertificates(self) -> Optional[RevokedCertificates]:
+        return self['tbs_cert_list']['revoked_certificates'] \
+            if 'revoked_certificates' in self['tbs_cert_list'] \
+            else None
 
     @property
     def thisUpdate(self) -> datetime:
