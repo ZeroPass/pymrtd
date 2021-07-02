@@ -9,7 +9,7 @@ from pymrtd.pki import algo_utils, cms, oids, x509
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from typing import List,  Optional, Union
+from typing import cast, List, Optional, Union
 
 
 
@@ -143,9 +143,8 @@ class SOD(ElementaryFile):
 
     @classmethod
     def load(cls, encoded_bytes, strict=False):
-
         # Parse parent type
-        value = super().load(encoded_bytes, strict=strict)
+        value = cast(cls, super().load(encoded_bytes, strict=strict))
 
         ci = value.content
         ctype = ci['content_type'].native
