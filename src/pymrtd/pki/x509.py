@@ -34,11 +34,17 @@ class Certificate(x509.Certificate):
 
     @property
     def notValidBefore(self) -> datetime:
-        return self.not_valid_before
+        """
+        Returns the date and time in Zulu (no time zone) on which the certificate validity period begins.
+        """
+        return self.not_valid_before.replace(tzinfo=None)
 
     @property
     def notValidAfter(self) -> datetime:
-        return self.not_valid_after
+        """
+        Returns the date and time in Zulu (no time zone) on which the certificate validity period begins.
+        """
+        return self.not_valid_after.replace(tzinfo=None)
 
     def isValidOn(self, dateTime: datetime):
         ''' Verifies if certificate is valid on specific date-time '''
