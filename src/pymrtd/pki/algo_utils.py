@@ -23,7 +23,7 @@ def get_hash_algo_by_name(hash_algo: str):
     return _STR_TO_HASH_ALGO[hash_algo]
 
 def update_sig_algo_if_no_hash_algo(sig_algo: SignedDigestAlgorithm, hash_algo: str):
-    n_sig_algo = sig_algo['algorithm'].native 
+    n_sig_algo = sig_algo['algorithm'].native
     if n_sig_algo  == 'rsassa_pkcs1v15' or n_sig_algo == 'ecdsa' or n_sig_algo == 'dsa':
         if n_sig_algo == 'rsassa_pkcs1v15':
             n_sig_algo = 'rsa'

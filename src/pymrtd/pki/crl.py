@@ -1,21 +1,8 @@
 import datetime
-from .x509 import CscaCertificate
-from .cert_utils import verify_sig
+from .x509 import CscaCertificate #pylint: disable=relative-beyond-top-level
+from .cert_utils import verify_sig #pylint: disable=relative-beyond-top-level
 from asn1crypto.crl import CertificateList, RevokedCertificates
 from typing import Optional
-
-"""
-CRL: \
-    -object ***
-    -serial Number***
-    -subject key //not
-    -authority key (CSCA - foreign key) ***
-    -countrKey ***
-    -start, end valid ***
-    -signature algorithm string**
-    -signature hash algorithm string**
-    -SHA256 hash over whole object string or bytes
-"""
 
 class CertificateRevocationListError(Exception):
     pass

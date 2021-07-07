@@ -1,9 +1,9 @@
 
 import asn1crypto.core as asn1
 
-from . import cms
-from .x509 import CscaCertificate, MasterListSignerCertificate
-from .oids import id_icao_cscaMasterList
+from . import cms #pylint: disable=relative-beyond-top-level
+from .x509 import CscaCertificate, MasterListSignerCertificate #pylint: disable=relative-beyond-top-level
+from .oids import id_icao_cscaMasterList #pylint: disable=relative-beyond-top-level
 
 
 class CertList(asn1.SetOf):
@@ -37,7 +37,7 @@ class MlSignedData(cms.MrtdSignedData):
     _certificate_spec = MasterListSignerCertificate
     cms.cms_register_encap_content_info_type(
         'icaoCscaMasterList',
-        id_icao_cscaMasterList, 
+        id_icao_cscaMasterList,
         CscaList
     )
 
@@ -59,6 +59,7 @@ class CscaMasterList(MlContentInfo):
         if ctype != 'signed_data': # ICAO 9303-12-p25
             raise CscaMasterListError("Invalid master list content type: {}, should be 'signed_data'".format(ctype))
 
+        #pylint: disable=protected-access
         ci._sd = ci['content']
         cver = ci._sd.version.native
         if cver != 'v3': # ICAO 9303-12-p25
@@ -69,9 +70,9 @@ class CscaMasterList(MlContentInfo):
 
         if ci._sd.content.version != 0: # ICAO 9303-12-p27
             raise CscaMasterListError("Unsupported encapContentInfo version: {}, should be 0".format(ci._sd.version))
-        
+
         if len(ci._sd.certificates) < 1:
-            raise CscaMasterListError("No master list signer certificate found") 
+            raise CscaMasterListError("No master list signer certificate found")
 
         assert isinstance(ci._sd.certificates[0], MasterListSignerCertificate)
         assert isinstance(ci._sd.content, CscaList)
@@ -88,7 +89,7 @@ class CscaMasterList(MlContentInfo):
         return self._sd.content
 
     def verify(self) -> None:
-        ''' 
+        '''
         Verifies every SignerInfo object and the digital signature over content.
         On verification failure a CscaMasterListError exception is risen.
         '''

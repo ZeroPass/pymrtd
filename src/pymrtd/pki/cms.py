@@ -4,21 +4,20 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 
 from pymrtd.pki import algo_utils, cert_utils, x509
-
 from typing import List, Optional, Union
 
 
 def cms_register_content_type(name, oid):
-    cms.ContentType._map[oid] = name
-    if cms.ContentType._reverse_map is None:
-        cms.ContentType._reverse_map = { name : oid }
+    cms.ContentType._map[oid] = name #pylint: disable=protected-access
+    if cms.ContentType._reverse_map is None: #pylint: disable=protected-access
+        cms.ContentType._reverse_map = { name : oid } #pylint: disable=protected-access
     else:
-        cms.ContentType._reverse_map[name] = oid
+        cms.ContentType._reverse_map[name] = oid #pylint: disable=protected-access
 
 
-def cms_register_encap_content_info_type(name, oid, type):
+def cms_register_encap_content_info_type(name, oid, type): #pylint: disable=redefined-builtin
     cms_register_content_type(name, oid)
-    cms.EncapsulatedContentInfo._oid_specs[name] = type
+    cms.EncapsulatedContentInfo._oid_specs[name] = type #pylint: disable=protected-access
 
 
 class MrtdSignedDataError(Exception):
@@ -40,16 +39,16 @@ class MrtdSignedData(cms.SignedData):
     CertList = Union[List[_certificate_spec], CertificateSetOf]
 
     def __init__(self, value=None, default=None, **kwargs):
-        self.CertificateSetOf._child_spec  = self._certificate_spec
+        self.CertificateSetOf._child_spec  = self._certificate_spec #pylint: disable=protected-access
         super().__init__(value, default, **kwargs)
 
     @property
     def content(self):
-         return self['encap_content_info']['content'].parsed
+        return self['encap_content_info']['content'].parsed
 
     @property
     def contentType(self):
-         return self['encap_content_info']['content_type']
+        return self['encap_content_info']['content_type']
 
     @property
     def certificates(self) -> "CertList" :
@@ -71,11 +70,11 @@ class MrtdSignedData(cms.SignedData):
 
     def getCertificateBySNI(self, sni: cms.IssuerAndSerialNumber) -> _certificate_spec:
         ''' Returns signer certificate identified by serial number and issuer '''
-        return self.__class__._get_signer_cert_by_sni(self.certificates, sni)
+        return self.__class__._get_signer_cert_by_sni(self.certificates, sni) #pylint: disable=protected-access
 
     def getCertificateByKeyId(self, keyId: bytes)  -> _certificate_spec:
         ''' Returns signer certificate identified by subject key identifier '''
-        return self.__class__._get_signer_cert_by_keyid(self.certificates, keyId)
+        return self.__class__._get_signer_cert_by_keyid(self.certificates, keyId) #pylint: disable=protected-access
 
     def getHasherBySidx(self, sidx) -> hashes.Hash:
         ''' Returns hashes.Hash object specified in SignerInfo returned from SignerInfos list by its index. '''
@@ -101,7 +100,7 @@ class MrtdSignedData(cms.SignedData):
         sig_algo  = si['signature_algorithm']
         return algo_utils.update_sig_algo_if_no_hash_algo(sig_algo, hash_algo)
 
-    def verify(self, certificateList: Optional[CertList] = []) -> None:
+    def verify(self, certificateList: Optional[CertList] = []) -> None: #pylint: disable=dangerous-default-value
         '''
         Verifies every SignerInfo object and the digital signature over content.
         On failure MrtdSignedDataError exception is risen.
@@ -113,12 +112,12 @@ class MrtdSignedData(cms.SignedData):
                 sni = si['sid'].chosen
                 c = self.getCertificateBySNI(sni)
                 if c is None:
-                    c = self.__class__._get_signer_cert_by_sni(certificateList, sni)
+                    c = self.__class__._get_signer_cert_by_sni(certificateList, sni) #pylint: disable=protected-access
             elif si['version'].native == 'v3':
                 keyid = si['sid'].native
                 c = self.getCertificateByKeyId(keyid)
                 if c is None:
-                    c = self.__class__._get_signer_cert_by_keyid(certificateList, keyid)
+                    c = self.__class__._get_signer_cert_by_keyid(certificateList, keyid) #pylint: disable=protected-access
             else:
                 raise MrtdSignedDataError("Invalid SignerInfo version at sidx: {}".format(sidx))
 

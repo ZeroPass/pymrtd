@@ -1,11 +1,9 @@
-from typing import overload
 from asn1crypto import x509
-import asn1crypto.core as asn1
-
-from .oids import id_icao_cscaMasterListSigningKey
-from .cert_utils import verify_cert_sig
-
 from datetime import datetime
+from typing import overload
+
+from .oids import id_icao_cscaMasterListSigningKey #pylint: disable=relative-beyond-top-level
+from .cert_utils import verify_cert_sig #pylint: disable=relative-beyond-top-level
 
 class CertificateVerificationError(Exception):
     pass
@@ -124,7 +122,6 @@ class Certificate(x509.Certificate):
         )
 
 
-
 class CscaCertificate(Certificate):
 
     def verify(self, issuing_cert: x509.Certificate, nc_verification = False):
@@ -158,7 +155,7 @@ class CscaCertificate(Certificate):
             Certificate._require('crl_sign' in key_usage, "Missing field 'cRLSign' in KeyUsage extension")
 
     @overload
-    def verify(self, nc_verification = False):
+    def verify(self, nc_verification = False): #pylint: disable=arguments-differ
         self.verify(self, nc_verification)
 
 
@@ -195,7 +192,6 @@ class MasterListSignerCertificate(Certificate):
                     'digital_signature' in key_usage,
                     "Missing field 'digitalSignature' in KeyUsage"
                 )
-
 
 
 class DocumentSignerCertificate(Certificate):

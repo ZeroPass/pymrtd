@@ -24,7 +24,7 @@ class ElementaryFile(asn1.Asn1Value):
         self._content = None
 
     @classmethod
-    def load(cls, encoded_data: bytes, strict=False):
+    def load(cls, encoded_data: bytes, strict=False): #pylint: disable=arguments-differ
         '''
         Loads a BER/DER-encoded byte string using the current class as the spec
         :param encoded_data:
@@ -36,7 +36,7 @@ class ElementaryFile(asn1.Asn1Value):
             A instance of the current class
         '''
 
-        class_, method, tag, header, contents, trailer = asn1Parser.parse(encoded_data, strict=strict)
+        class_, method, tag, header, contents, trailer = asn1Parser.parse(encoded_data, strict=strict) #pylint: disable=unused-variable
         value = cls(class_=class_, tag=tag, method=method, contents=contents)
 
         if cls.class_ is not None and value.class_ != cls.class_:
@@ -57,7 +57,8 @@ class ElementaryFile(asn1.Asn1Value):
                 .format(cls.tag,value.tag)
             )
 
-        value.content # Force parsing of content. This is done in order for any invalid content to rise an exception
+        # Force parsing of content. This is done in order for any invalid content to rise an exception
+        value.content #pylint: disable=pointless-statement
         return value
 
     @property
@@ -105,10 +106,10 @@ class ElementaryFile(asn1.Asn1Value):
             try:
                 self._content = self._content_spec.load(self.contents, strict=True)
                 if isinstance(self._content, (asn1.Sequence, asn1.SequenceOf)):
-                    self._content._parse_children(recurse=True)
+                    self._content._parse_children(recurse=True) #pylint: disable=protected-access
             except (ValueError, TypeError) as e:
-                from asn1crypto._types import type_name
+                from asn1crypto._types import type_name #pylint: disable=import-outside-toplevel
                 self._content = None
                 args   = e.args[1:]
                 e.args = (e.args[0] + '\n    while parsing {}'.format(type_name(self)),) + args
-                raise e
+                raise

@@ -2,7 +2,6 @@ from typing import Tuple
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives.asymmetric import padding
 from math import ceil
 
 class Dss1VerifierError(Exception):
@@ -36,7 +35,7 @@ class Dss1Verifier:
         try:
             self.recover_M1(message, signature)
             return True
-        except:
+        except: #pylint: disable=bare-except
             return False
 
     def recover_M1(self, message: bytes, signature: bytes) -> bytes:
@@ -82,6 +81,7 @@ class Dss1Verifier:
         TODO: Evaluate if signature opening function specified in ISO 9796-2 paragraph B.5 (A.5 in 2002 publ.) should be implemented.
               See ICAO 9303-11 p24.
         """
+        #pylint: disable=protected-access
         backend = self._pub_key._backend
         key = self._pub_key
 
@@ -127,16 +127,16 @@ class Dss1Verifier:
         ''' Constructs message M from M1 and M2 '''
         if partial_recovery:
             return M1 + M2
-        else:
-            M = M1
-            if M != M2:
-                raise Dss1VerifierError("Provided message and recovered message don't match")
-            return M
+        # else M1 should be equal to M2 and return M1
+        M = M1
+        if M != M2:
+            raise Dss1VerifierError("Provided message and recovered message don't match")
+        return M
 
     @staticmethod
     def _get_hash_algo(T: int) -> hashes.HashAlgorithm:
         hash_algo = None
-        if T == Dss1Verifier.TRAILER_IMPLICIT or T == Dss1Verifier.TRAILER_SHA1:
+        if T in (Dss1Verifier.TRAILER_IMPLICIT, Dss1Verifier.TRAILER_SHA1):
             hash_algo = hashes.SHA1()
         elif T == Dss1Verifier.TRAILER_SHA224:
             hash_algo = hashes.SHA224()

@@ -1,13 +1,11 @@
 import asn1crypto.core as asn1
 from asn1crypto.util import int_from_bytes
 from asn1crypto.keys import PublicKeyInfo
+from pymrtd.pki import keys, oids
+from typing import Union #pylint: disable=wrong-import-order
 
 from .base import ElementaryFile
 from .mrz import MachineReadableZone
-from pymrtd.pki import keys, oids
-
-from typing import Union
-
 
 class ActiveAuthenticationInfoId(asn1.ObjectIdentifier):
     _map = {
@@ -82,7 +80,7 @@ class SecurityInfo(asn1.Choice):
 
         self._choice = 0
         for index, info in enumerate(self._alternatives):
-            toidm = info[1]._fields[0][1]._map
+            toidm = info[1]._fields[0][1]._map #pylint: disable=protected-access
             if toidm is not None and oid in toidm:
                 self._choice = index
                 return
@@ -92,7 +90,7 @@ class SecurityInfo(asn1.Choice):
             super().parse()
             if self.name == 'aa_info' or self.name == 'chip_auth_info':
                 if self._parsed['version'].native != 1:
-                    from asn1crypto._types import type_name
+                    from asn1crypto._types import type_name #pylint: disable=import-outside-toplevel
                     raise ValueError("{} version != 1".format(type_name(self._parsed)))
         return self._parsed
 
@@ -198,6 +196,7 @@ class DG14(DataGroup):
 class DG15(DataGroup):
     tag = 15
     _content_spec = PublicKeyInfo
+    _aakey: keys.AAPublicKey
 
     @property
     def aaPublicKeyInfo(self) -> PublicKeyInfo:

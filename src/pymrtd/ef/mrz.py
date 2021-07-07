@@ -82,7 +82,7 @@ class MachineReadableZone(asn1.OctetString):
 
     @property
     def type(self) -> str:
-        return self._type # pylint: disable=maybe-no-member
+        return self._type #pylint: disable=maybe-no-member
 
     def parse(self):
         self._parsed = {}
