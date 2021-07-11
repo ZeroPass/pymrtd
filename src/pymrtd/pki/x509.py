@@ -1,6 +1,6 @@
 from asn1crypto import x509
 from datetime import datetime
-from typing import Optional, overload
+from typing import Optional
 
 from .oids import id_icao_cscaMasterListSigningKey #pylint: disable=relative-beyond-top-level
 from .cert_utils import verify_cert_sig #pylint: disable=relative-beyond-top-level
@@ -61,6 +61,19 @@ class Certificate(x509.Certificate):
         """
         self._verify_cert_fields()
         self._verify_tbs_cert_fields()
+
+    def nameChanged(self) -> bool:
+        """
+        Checks if certificate contains MRTD specific extension
+        with OID=2.23.136.1.1.6.1 which indicates CSCA certificate DN name change.
+        See ICAO 9303 part 12, section 7.1.1.5.
+        https://www.icao.int/publications/Documents/9303_p12_cons_en.pdf
+        :return: True if certificate DN name has changed, otherwise False.
+        """
+        for e in self.native['tbs_certificate']['extensions']:
+            if e['extn_id'] == '2.23.136.1.1.6.1':
+                return True
+        return False
 
     def verify(self, issuingCert: x509.Certificate, checkConformance = False) -> None:
         """
@@ -124,6 +137,9 @@ class Certificate(x509.Certificate):
             'Invalid country name in subject field: {}'.format(cn)
         )
 
+        # Note, we don't check if the certificate has common_name (CN) in the subject and issuer field because
+        # some valid CSCA certificates (and possible DSC) are missing this field. e.g. US CSCA certificates
+
     def _require_extension_field(self, field: str):
         exts = self['tbs_certificate']['extensions']
         for e in exts:
@@ -178,7 +194,7 @@ class CscaCertificate(Certificate):
         )
 
         super()._require_extension_field('basic_constraints')
-        Certificate._require(self.ca == True, "Certificate is required to be root CA")
+        Certificate._require(self.ca == True, "CSCA certificate must be root CA")
         Certificate._require(self.max_path_length is not None, "Missing 'PathLenConstraint' field in basic constraints")
         Certificate._require( self.max_path_length is None or 0 <= self.max_path_length <= 1, #Note: Portuguese cross-link CSCA has value 2
             "Invalid CSCA path length constraint: {}".format(self.max_path_length)
