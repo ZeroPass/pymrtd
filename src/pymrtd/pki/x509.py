@@ -5,6 +5,8 @@ from typing import Optional
 from .oids import id_icao_cscaMasterListSigningKey #pylint: disable=relative-beyond-top-level
 from .cert_utils import verify_cert_sig #pylint: disable=relative-beyond-top-level
 
+import asn1crypto.core as asn1
+
 class CertificateVerificationError(Exception):
     pass
 
@@ -112,6 +114,8 @@ class Certificate(x509.Certificate):
         )
 
     def _verify_tbs_cert_fields(self):
+        # Note, we don't check if the certificate has common_name (CN) in the subject and issuer field as required by ICAO 9303 part 12 section 7.1.1.1.1.
+        # The reason for not checking is that some valid CSCA certificates (and possible DSC) are missing this field. e.g. US CSCA certificates
         self._require_tbs_cert_field('extensions')
         self._require_tbs_cert_field('issuer')
         self._require_tbs_cert_field('serial_number')
@@ -121,7 +125,7 @@ class Certificate(x509.Certificate):
         self._require_tbs_cert_field('validity')
         self._require_tbs_cert_field('version')
 
-        Certificate._require('country_name' in self.issuer.native,
+        Certificate._require('country_name' in self.issuer.native, # ICAO 9303 part 12 section 7.1.1.1.1
             "Issuer field is missing field 'country_name'"
         )
         cn = self.issuer.native['country_name']
@@ -129,16 +133,13 @@ class Certificate(x509.Certificate):
             'Invalid country name in issuer field: {}'.format(cn)
         )
 
-        Certificate._require('country_name' in self.subject.native,
+        Certificate._require('country_name' in self.subject.native, # ICAO 9303 part 12 section 7.1.1.1.1
             "Subject field is missing field 'country_name'"
         )
         cn = self.subject.native['country_name']
         Certificate._require( 0 < len(cn) < 3,
             'Invalid country name in subject field: {}'.format(cn)
         )
-
-        # Note, we don't check if the certificate has common_name (CN) in the subject and issuer field because
-        # some valid CSCA certificates (and possible DSC) are missing this field. e.g. US CSCA certificates
 
     def _require_extension_field(self, field: str):
         exts = self['tbs_certificate']['extensions']
@@ -241,7 +242,7 @@ class MasterListSignerCertificate(Certificate):
         super().checkConformance()
 
         # Now verify master list signer certificate conforms to the ICAO specifications
-        Certificate._require(self.issuerCountry.lower() == self.subject.native['country_name'].lower(),
+        Certificate._require(self.issuerCountry.lower() == self.subject.native['country_name'].lower(),  # ICAO 9303 part 12, 7.1.1
             "The subject and issuer country doesn't match"
         )
 
@@ -276,8 +277,90 @@ class MasterListSignerCertificate(Certificate):
             super()._require_extension_value('extended_key_usage', [id_icao_cscaMasterListSigningKey]) #icao 9303-p12 p20, p27
             super().verify(issuingCert, checkConformance)
 
+
+class DocumentTypeListSyntax(asn1.Sequence):
+    """
+    Defines list of document types of which documents the DSC certificate can sign.
+    The document type as contained in MRZ, e.g. "P" or "ID" where a
+    single letter denotes all document types starting with that letter
+    where 2 letters denote document mayor type and document sub type.
+    Some types: P = passport, I - id card
+    See also pymrtd.ef.mrz.DocumentType
+    """
+    # Note: Document ICAO-9303-p12 7.1.6 defines the doc. types to be put into single SET OF docTypeList,
+    #       but examining some DSC certificates showed that some CA implemented it wrongly and put
+    #       each doc. type in their own SET OF list object.
+    #       Example of such DSC certificate would be a Moldovan DSC ser. no.:  02B27F8C79935F02
+    #       Parsing of invalid encoded docTypeList will result in partially parsed or unparsed list.
+    # TODO: Try parse invalid encoded docTypeList
+    _fields = [
+        ('version', asn1.Integer),
+        ('docTypeList', asn1.SetOf, {'spec': asn1.PrintableString})
+    ]
+
+    @property
+    def version(self) -> int:
+        return super().__getitem__('version').native
+
+    def contains(self, docType: str) -> bool:
+        """
+        Function check if list contains specific document type.
+        :param docType: Document type to verify. Single letter denotes mayjor type. e.g. P, PB, I, ID
+        :return: If docType is single letter i.e. major type than True is returned
+        on first occurrence of document type in the list that begins with that letter.
+        Otherwise True is returned only if docType matches any of the full types in the list.
+        """
+        majorType = len(docType) == 1
+        for t in self:
+            if majorType:
+                if t.native[0] == docType:
+                    return True
+            elif t.native == docType:
+                return True
+        return False
+
+    def __len__(self):
+        return len(self._get_list())
+
+    def __getitem__(self, key):
+        return self._get_list().__getitem__(key)
+
+    def __iter__(self):
+        return self._get_list().__iter__()
+
+    def _get_list(self) -> asn1.SetOf:
+        return super().__getitem__('docTypeList')
+
+
 class DocumentSignerCertificate(Certificate):
     """ Document Signer Certificate (DSC) which should be used to verify SOD data file in eMRTD """
+
+    _fields = Certificate._fields
+    _fields[0][1]._fields[9][1]._child_spec._oid_specs['icao_mrtd_document_type_list'] = DocumentTypeListSyntax #pylint: disable=protected-access
+    _fields[0][1]._fields[9][1]._child_spec._fields[0][1]._map['2.23.136.1.1.6.2'] = 'icao_mrtd_document_type_list' # DS document type #pylint: disable=protected-access
+
+    #  The DS document type (icao-mrtd-security-extensions-document-type-list) is prioriterized as DSC
+    #  should have DS document type extension and not document type list (icao-mrtd-security-document-type-list).
+    #  We allow document type list anyways because some DSC has this extension insted of DS document type.
+    #  For example French DSC certificate ser. no.: 1121a7f221c464815d0ea81f6bf56a4d8edc
+    _fields[0][1]._fields[9][1]._child_spec._fields[0][1]._map['2.23.136.1.1.4'] = 'icao_mrtd_document_type_list' #pylint: disable=protected-access
+    _icao_mrtd_document_type_list_value = None
+
+    @property
+    def documentTypes(self) -> Optional[DocumentTypeListSyntax]:
+        """
+        Returns the list of document types (as type appear in the MRZ) this DSC can sign.
+        Note, the DSC certificate must contain extension icao-mrtd-security-extensions-document-type-list (OID=2.23.136.1.1.6.2) or
+        icao-mrtd-security-document-type-list (OID=2.23.136.1.1.4), otherwise None is returned.
+        See doc: ICAO 9303 part 12, section 7.1.1.6
+                 https://www.icao.int/publications/Documents/9303_p12_cons_en.pdf
+
+        :return Optional[DocumentTypeListSyntax]: List of document types DSC certificate can sign or None.
+        """
+        if not self._processed_extensions:
+            self._set_extensions()
+        return self._icao_mrtd_document_type_list_value
+
 
     def checkConformance(self) -> None:
         """
