@@ -1,6 +1,20 @@
+from enum import Enum
 import asn1crypto.core as asn1
 from datetime import datetime, date, timedelta
 from typing import Optional
+
+class DocumentType(Enum):
+    """
+    Enumeration of possible mayjor document types.
+    """
+    Passport = 'P' # DOC ICAO 9303-p4 4.2.2 specifies a capital letter 'P' as document code to define machine readable passport (MRP).
+                   #    One additional capital letter can follow 'P' at the discretion of the issuing State or organization, to designate
+                   #    other types of passports such as MRP issued to diplomatic staff, an MRP issued for travel on government business, or a passport issued for a special purpose.
+                   #
+                   #    Additional note: From doc ICAO 9303-p4 4.2.2.1 notes 'm':
+                   #      "In documents other than passports, e.g. United Nations laissez-passer, seafarer’s identity document
+                   #       or refugee travel document, the official title of the document shall be indicated  instead of “Passport”.
+                   #       However, the first character of the document code shall be P"
 
 class MachineReadableZone(asn1.OctetString):
     class_ = 1
@@ -8,8 +22,8 @@ class MachineReadableZone(asn1.OctetString):
     _parsed = None
 
     @classmethod
-    def load(cls, encoded_data: bytes, strict=False):
-        v = super().load(encoded_data, strict)
+    def load(cls, encoded_data: bytes, strict=False, **kwargs):
+        v = super().load(encoded_data, strict, **kwargs)
         clen = len(v.contents)
         if clen == 90:
             v._type = 'td1'
