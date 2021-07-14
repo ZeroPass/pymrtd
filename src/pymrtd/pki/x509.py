@@ -129,7 +129,7 @@ class Certificate(x509.Certificate):
             "Issuer field is missing field 'country_name'"
         )
         cn = self.issuer.native['country_name']
-        Certificate._require( 0 < len(cn) < 3,
+        Certificate._require( len(cn) == 2, # ICAO 9303 part 12 section 7.1.1.1.1
             'Invalid country name in issuer field: {}'.format(cn)
         )
 
@@ -137,7 +137,7 @@ class Certificate(x509.Certificate):
             "Subject field is missing field 'country_name'"
         )
         cn = self.subject.native['country_name']
-        Certificate._require( 0 < len(cn) < 3,
+        Certificate._require( len(cn) == 2, # ICAO 9303 part 12 section 7.1.1.1.1
             'Invalid country name in subject field: {}'.format(cn)
         )
 
