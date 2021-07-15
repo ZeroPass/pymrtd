@@ -59,7 +59,7 @@ class Certificate(x509.Certificate):
         An exception is risen if conformance check fails.
         See methods _verify_cert_fields() and _verify_tbs_cert_fields()
         to get information what is checked.
-        :raise: CertificateVerificationError if conformance check fails.
+        :raises: CertificateVerificationError if conformance check fails.
         """
         self._verify_cert_fields()
         self._verify_tbs_cert_fields()
@@ -188,7 +188,7 @@ class CscaCertificate(Certificate):
                     Note, there are also certificate with greater value for the path length constraint.
                     Such certificate will be rejected by this function.
 
-        :raise: CertificateVerificationError if conformance check fails.
+        :raises: CertificateVerificationError if conformance check fails.
         """
         # Check first conformance to the X.509 standard
         super().checkConformance()
@@ -244,7 +244,7 @@ class MasterListSignerCertificate(Certificate):
         Then verifies conformance to the ICAO 9303 standard:
             - requirement for the subject and issuer field to have the same country value.
             - requirement for the key usage value to contain digitalSignature.
-        :raise: CertificateVerificationError if conformance check fails.
+        :raises: CertificateVerificationError if conformance check fails.
         """
         # Check first conformance to the X.509 standard
         super().checkConformance()
@@ -380,13 +380,13 @@ class DocumentSignerCertificate(Certificate):
         Then verifies conformance to the ICAO 9303 standard:
             - requirement for the subject and issuer field to have the same country value.
             - requirement for the key usage value to contain digitalSignature.
-        :raise: CertificateVerificationError if conformance check fails.
+        :raises: CertificateVerificationError if conformance check fails.
         """
         # Check first DSC conformance to the X.509 standard
         super().checkConformance()
 
         # Now verify DSC conforms to the ICAO specifications
-        Certificate._require(self.ca == False, "DSC certificate must not be root CA")
+        Certificate._require(self.ca is None or self.ca == False, "DSC certificate must not be root CA") #pylint: disable=singleton-comparison
         Certificate._require(self.self_signed == 'no', "DSC certificate must not be self-issued")
         Certificate._require(self.issuerCountry.lower() == self.subject.native['country_name'].lower(),  # ICAO 9303 part 12, 7.1.1
             "The subject and issuer country doesn't match"
