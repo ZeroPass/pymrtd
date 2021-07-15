@@ -177,29 +177,37 @@ class CscaCertificate(Certificate):
             - requirement for the subject and issuer field to have the same country value.
             - requirement for the CSCA to be root CA certificate
             - requirement for the key usage value to contain keyCertSign and cRLSign.
-            - requirement for the path length constraint value to be 0 or 1.
-              Note: ICAO 9303 requires max path length to be 0 or 1 for LCSCA.
+            - requirement for the value of path length constraint to be 0 or 1 (if present).
+              If max path length is not present it should be assumed then that
+              the max path length is either 0 for CSCA or 1 for LCSCA.
+
+              Note: ICAO 9303 specs require max path length to be 0 or 1 for LCSCA.
                     This implementation just check that the path length constraint
                     to be either of the 2 values but doesn't check for the cert type i.e. is it CSCA or LCSCA.
                     The reason for this is that not all CSCA/LCSCA follow this strictly.
                     Note, there are also certificate with greater value for the path length constraint.
                     Such certificate will be rejected by this function.
+
         :raise: CertificateVerificationError if conformance check fails.
         """
         # Check first conformance to the X.509 standard
         super().checkConformance()
 
         # Now verify CSCA conforms to the ICAO specifications
-        Certificate._require(self.issuerCountry.lower() == self.subject.native['country_name'].lower(),
+        Certificate._require(self.issuerCountry.lower() == self.subject.native['country_name'].lower(), # ICAO 9303 part 12, 7.1.1
             "The subject and issuer country doesn't match"
         )
 
         super()._require_extension_field('basic_constraints')
         Certificate._require(self.ca == True, "CSCA certificate must be root CA")
-        Certificate._require(self.max_path_length is not None, "Missing 'PathLenConstraint' field in basic constraints")
-        Certificate._require( self.max_path_length is None or 0 <= self.max_path_length <= 1, #Note: Portuguese cross-link CSCA has value 2
-            "Invalid CSCA path length constraint: {}".format(self.max_path_length)
-        )
+
+        # ICAO 9303 part 12 7.1.1 specs require PathLenConstraint extension to be present but there can be some CSCA certificates
+        # which don't contain this extension. Because of this we lessen this restriction  here and assume if this extension is not present
+        # the value of PathLenConstraint is 0 for CSCA or 1 for LCSCA.
+        if self.max_path_length is not None:
+            Certificate._require( self.max_path_length is None or 0 <= self.max_path_length <= 1, #Note: Portuguese cross-link CSCA has value 2
+                "Invalid CSCA path length constraint: {}".format(self.max_path_length)
+            )
 
         super()._require_extension_field('key_usage')
         key_usage = self.key_usage_value.native
