@@ -378,7 +378,9 @@ class DocumentSignerCertificate(Certificate):
         super().checkConformance()
 
         # Now verify DSC conforms to the ICAO specifications
-        Certificate._require(self.issuerCountry.lower() == self.subject.native['country_name'].lower(),
+        Certificate._require(self.ca == False, "DSC certificate must not be root CA")
+        Certificate._require(self.self_signed == 'no', "DSC certificate must not be self-issued")
+        Certificate._require(self.issuerCountry.lower() == self.subject.native['country_name'].lower(),  # ICAO 9303 part 12, 7.1.1
             "The subject and issuer country doesn't match"
         )
 
