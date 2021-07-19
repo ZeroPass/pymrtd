@@ -1,10 +1,11 @@
 from asn1crypto import x509
 from pymrtd.pki import keys
 
-def verify_sig(signing_cert: x509.Certificate, msg_bytes: bytes, sig_bytes: bytes, sig_algo: keys.SignatureAlgorithm):
+def verify_sig(signing_cert: x509.Certificate, msg_bytes: bytes, sig_bytes: bytes, sig_algo: keys.SignatureAlgorithm) -> bool:
     """
     Verifies digital signature of message against public key of the signing certificate.
-    It returns True if verification succeeds, otherwise False.
+    :return: True if verification succeeds, otherwise False.
+    :raises *Exception: If there was a problem in the process before signature is fully verified.
     """
     pub_key = keys.PublicKey.load(signing_cert.public_key.dump())
     if pub_key.isEcKey():
@@ -16,7 +17,8 @@ def verify_sig(signing_cert: x509.Certificate, msg_bytes: bytes, sig_bytes: byte
 def verify_cert_sig(issued_cert: x509.Certificate, issuing_cert: x509.Certificate) -> bool:
     """
     Verifies digital signature of issued certificate against public key of the issuing certificate.
-    It returns True if verification succeeds, otherwise False.
+    :return: True if verification succeeds, otherwise False.
+    :raises *Exception: If there was a problem in the process before signature is fully verified.
     """
     tbs_cert  = issued_cert['tbs_certificate']
     sig_algo  = tbs_cert['signature']
