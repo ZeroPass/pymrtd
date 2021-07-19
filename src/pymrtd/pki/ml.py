@@ -1,4 +1,5 @@
 
+from typing import cast
 import asn1crypto.core as asn1
 
 from . import cms #pylint: disable=relative-beyond-top-level
@@ -53,8 +54,8 @@ class CscaMasterListError(Exception):
 class CscaMasterList(MlContentInfo):
 
     @classmethod
-    def load(cls, encoded_bytes, strict=False):
-        ci = super().load(encoded_bytes, strict=strict)
+    def load(cls, encoded_bytes, strict=False) -> "CscaMasterList":
+        ci = cast(cls, super().load(encoded_bytes, strict=strict))
         ctype = ci['content_type'].native
         if ctype != 'signed_data': # ICAO 9303-12-p25
             raise CscaMasterListError("Invalid master list content type: {}, should be 'signed_data'".format(ctype))
