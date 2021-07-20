@@ -37,13 +37,14 @@ class CertificateRevocationList(CertificateList):
     def thisUpdate(self) -> datetime:
         """Returns the date when this CRL was issued"""
         this_update = self['tbs_cert_list']['this_update'].native
-        return this_update
+        return this_update.replace(tzinfo=None)
 
     @property
     def nextUpdate(self) -> datetime:
         """Returns the date of next CRL issuance"""
         next_update = self['tbs_cert_list']['next_update'].native
-        return next_update
+        return next_update.replace(tzinfo=None)
+
 
     @property
     def signatureAlgorithm(self) -> str:
