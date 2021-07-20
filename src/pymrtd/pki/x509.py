@@ -17,9 +17,14 @@ class Certificate(x509.Certificate):
         return self.sha256.hex()
 
     @property
-    def issuerCountry(self) -> str:
-        """Function returns country of certificate issuer"""
-        country = self.issuer.native['country_name']
+    def issuerCountry(self) -> Optional[str]:
+        """
+        Function returns country of certificate issuer.
+        :return: Issuer country code. Note, can return None in non-conformant certificates.
+        """
+        country = None
+        if self.issuer is not None and 'country_name' in self.issuer:
+            country = self.issuer.native['country_name']
         return country
 
     @property
@@ -83,7 +88,9 @@ class Certificate(x509.Certificate):
         :param issuingCert: The certificate that issued this certificate
         :param checkConformance: X.509 certificate conformance verification, if False only signature will be verified.
                                  Conformance verification can also be done through checkConformance method.
-        :raises: CertificateVerificationError on failed signature verification or failed Conformance check.
+        :raises CertificateVerificationError: On failed signature verification or failed Conformance check.
+        :raises *Exception: If there was a problem in the process before signature is fully verified.
+             See cert_utils.verify_sig
         """
 
         # Verify certificate is conform to the basic X.509 standard
@@ -189,6 +196,8 @@ class CscaCertificate(Certificate):
                     Such certificate will be rejected by this function.
 
         :raises: CertificateVerificationError if conformance check fails.
+        :raises *Exception: If there was a problem in the process before signature is fully verified.
+             See cert_utils.verify_sig
         """
         # Check first conformance to the X.509 standard
         super().checkConformance()
@@ -226,7 +235,9 @@ class CscaCertificate(Certificate):
                             If None, this certificate will be used as issuing certificate to verify the certificate signature.
         :param checkConformance: X.509 and ICAO 9303 CSCA conformance verification, if False only signature will be verified.
                                  Conformance verification can also be done through checkConformance method
-        :raises: CertificateVerificationError on failed signature verification or failed Conformance check.
+        :raises CertificateVerificationError: On failed signature verification or failed Conformance check.
+        :raises *Exception: If there was a problem in the process before signature is fully verified.
+             See cert_utils.verify_sig
         """
         if issuingCert is None:
             issuingCert = self
@@ -274,7 +285,9 @@ class MasterListSignerCertificate(Certificate):
         :param checkConformance: X.509 and ICAO 9303 master list signer certificate conformance verification,
                                  if False only signature will be verified.
                                  Conformance verification can also be done through checkConformance method
-        :raises: CertificateVerificationError on failed signature verification or failed Conformance check.
+        :raises CertificateVerificationError: On failed signature verification or failed Conformance check.
+        :raises *Exception: If there was a problem in the process before signature is fully verified.
+             See cert_utils.verify_sig
         """
         if self.ca: # Signer certificate is probably CSCA
                     # We do this check because not all master list issuers follow the specification rules and
@@ -415,6 +428,8 @@ class DocumentSignerCertificate(Certificate):
         :param issuingCert: The certificate that issued this certificate.
         :param checkConformance: X.509 and ICAO 9303 DSC conformance verification, if False only signature will be verified.
                                  Conformance verification can also be done through checkConformance method
-        :raises: CertificateVerificationError on failed signature verification or failed Conformance check.
+        :raises CertificateVerificationError: On failed signature verification or failed Conformance check.
+        :raises *Exception: If there was a problem in the process before signature is fully verified.
+             See cert_utils.verify_sig
         """
         super().verify(issuingCert, checkConformance)

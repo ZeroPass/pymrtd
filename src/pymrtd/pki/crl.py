@@ -11,9 +11,14 @@ class CertificateRevocationList(CertificateList):
     """Class; object that stores Certificate Revocation List (CRL) and has supporting functions """
 
     @property
-    def issuerCountry(self) -> str:
-        """Function returns country of CRL issuer"""
-        country = self.issuer.native['country_name']
+    def issuerCountry(self) -> Optional[str]:
+        """
+        Function returns country of CRL issuer
+        :return: Issuer country code. Note, can return None in non-conformant certificates.
+        """
+        country = None
+        if self.issuer is not None and 'country_name' in self.issuer:
+            country = self.issuer.native['country_name']
         return country
 
     @property
