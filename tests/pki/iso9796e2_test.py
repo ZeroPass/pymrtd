@@ -1,9 +1,10 @@
-import random
 import pytest
 from pymrtd import ef
-from pymrtd.pki.iso9796e2 import *
+from pymrtd.pki.iso9796e2 import * #pylint: disable=wildcard-import,unused-wildcard-import
 from pymrtd.pki.keys import PublicKey
 from random import randbytes, randint
+
+#pylint: disable=protected-access,line-too-long,singleton-comparison
 
 def __test_dss1_sig_verification(pub_key, msg, sig, M1):
     dss1_verifier = Dss1Verifier(pub_key._pub_key)

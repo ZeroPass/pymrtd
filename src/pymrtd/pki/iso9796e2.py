@@ -137,7 +137,7 @@ class Dss1Verifier:
     def _get_hash_algo(T: int) -> hashes.HashAlgorithm:
         hash_algo = None
         if T in (Dss1Verifier.TRAILER_IMPLICIT, Dss1Verifier.TRAILER_SHA1):
-            hash_algo = hashes.SHA1()
+            hash_algo = hashes.SHA1() # nosec, SHA-1 required for MRTD AA sig check
         elif T == Dss1Verifier.TRAILER_SHA224:
             hash_algo = hashes.SHA224()
         elif T == Dss1Verifier.TRAILER_SHA256:
