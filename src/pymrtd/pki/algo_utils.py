@@ -2,8 +2,7 @@ from asn1crypto.algos import SignedDigestAlgorithm
 from cryptography.hazmat.primitives import hashes
 
 _STR_TO_HASH_ALGO = {
-    'md5'        : hashes.MD5(),
-    'sha1'       : hashes.SHA1(),
+    'sha1'       : hashes.SHA1(), # nosec, SHA-1 required for MRTD AA sig check
     'sha224'     : hashes.SHA224(),
     'sha256'     : hashes.SHA256(),
     'sha384'     : hashes.SHA384(),
@@ -24,13 +23,11 @@ def get_hash_algo_by_name(hash_algo: str):
 
 def update_sig_algo_if_no_hash_algo(sig_algo: SignedDigestAlgorithm, hash_algo: str):
     n_sig_algo = sig_algo['algorithm'].native
-    if n_sig_algo  == 'rsassa_pkcs1v15' or n_sig_algo == 'ecdsa' or n_sig_algo == 'dsa':
+    if n_sig_algo in ('rsassa_pkcs1v15', 'ecdsa', 'dsa'):
         if n_sig_algo == 'rsassa_pkcs1v15':
             n_sig_algo = 'rsa'
 
-        if hash_algo == 'md5':
-            sig_algo = SignedDigestAlgorithm({'algorithm': 'md5_' + n_sig_algo})
-        elif hash_algo == 'sha1':
+        if hash_algo == 'sha1':
             sig_algo = SignedDigestAlgorithm({'algorithm': 'sha1_' + n_sig_algo})
         elif hash_algo == 'sha224':
             sig_algo = SignedDigestAlgorithm({'algorithm': 'sha224_' + n_sig_algo})
