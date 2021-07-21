@@ -245,7 +245,7 @@ def test_iso9796e2():
     assert Dss1Verifier._F_remove_padding(bytes.fromhex('0BBBBBBBA000'), 32) == bytes.fromhex('00')
     assert Dss1Verifier._F_remove_padding(bytes.fromhex('0BBBBBBBA001FF'), 32) == bytes.fromhex('01FF')
     assert Dss1Verifier._F_remove_padding(F, 4)          == bytes.fromhex('9D2784A67F8E7C659973EA1AEA25D95B6C8F91E5002F369F0FBDCE8A3CEC1991B543F1696546C5524CF23A5303CD6C98599F40B79F377B5F3A1406B3B4D8F96784D23AA88DB7E1032A405E69325FA91A6E86F5C71AEA978264C4A207446DAD4E7292E2DCDA3024B47DA8C063AA1E6D22FBD976AB0FE73D94D2D9C6D88127BC')
-    Dss1Verifier._F_remove_padding(bytes.fromhex(''), 4) == b'' # should not throw
+    assert Dss1Verifier._F_remove_padding(bytes.fromhex(''), 4) == b'' # should not throw
 
     ## Test Dss1Verifier._F_is_partial_recovery, requires the bit 5 being set in the first byte
     assert Dss1Verifier._F_is_partial_recovery(F)                   == True
