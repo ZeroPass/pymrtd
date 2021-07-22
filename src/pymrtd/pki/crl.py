@@ -34,6 +34,10 @@ class CertificateRevocationList(CertificateList):
             else None
 
     @property
+    def crlNumber(self) -> Optional[int]:
+        return self.crl_number_value.native if self.crl_number_value is not None else None
+
+    @property
     def thisUpdate(self) -> datetime:
         """Returns the date when this CRL was issued"""
         this_update = self['tbs_cert_list']['this_update'].native
@@ -115,7 +119,10 @@ class CertificateRevocationList(CertificateList):
         if checkConformance:
             self.checkConformance()
 
-        if not verify_sig(issuerCert, self['tbs_cert_list'].dump(), self['signature'], self['signature_algorithm']):
+        tbs_list  = self['tbs_cert_list']
+        sig_algo  = tbs_list['signature'] # Must use signed sig algorithm
+        sig_bytes = self.signature
+        if not verify_sig(issuerCert, tbs_list.dump(), sig_bytes, sig_algo):
             raise CertificateRevocationListError("Signature verification failed")
 
     @staticmethod
