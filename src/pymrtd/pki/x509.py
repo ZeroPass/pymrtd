@@ -28,12 +28,12 @@ class Certificate(x509.Certificate):
         return country
 
     @property
-    def subjectKey(self) -> bytes:
+    def subjectKey(self) -> Optional[bytes]:
         """Function returns subject key of certificate"""
         return self.key_identifier
 
     @property
-    def authorityKey(self) -> bytes:
+    def authorityKey(self) -> Optional[bytes]:
         """Function returns authority key of certificate"""
         return self.authority_key_identifier
 
@@ -211,10 +211,10 @@ class CscaCertificate(Certificate):
         Certificate._require(self.ca == True, "CSCA certificate must be root CA")
 
         # ICAO 9303 part 12 7.1.1 specs require PathLenConstraint extension to be present but there can be some CSCA certificates
-        # which don't contain this extension. Because of this we lessen this restriction  here and assume if this extension is not present
+        # which don't contain this extension. Because of this we lessen this restriction here and assume if this extension is not present
         # the value of PathLenConstraint is 0 for CSCA or 1 for LCSCA.
         if self.max_path_length is not None:
-            Certificate._require( self.max_path_length is None or 0 <= self.max_path_length <= 1, #Note: Portuguese cross-link CSCA has value 2
+            Certificate._require( 0 <= self.max_path_length <= 1, #Note: Portuguese cross-link CSCA has value 2
                 "Invalid CSCA path length constraint: {}".format(self.max_path_length)
             )
 

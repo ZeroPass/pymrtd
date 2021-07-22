@@ -171,7 +171,7 @@ class PublicKey:
                 assert 'salt_length' in sig_algo_params
 
                 mgf = sig_algo_params['mask_gen_algorithm']['algorithm'].native
-                if 'mgf1' != mgf:
+                if mgf != 'mgf1':
                     raise ValueError("Invalid mask generation algorithm: {}".format(mgf))
 
                 mgf1_hash_algo = sig_algo_params['mask_gen_algorithm']['parameters']['algorithm'].native
