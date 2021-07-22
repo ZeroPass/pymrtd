@@ -74,9 +74,14 @@ class CertificateRevocationList(CertificateList):
         An exception is risen if conformance check fails.
         :raises CertificateRevocationListError: If conformance check fails.
         """
-        self._require_crl_field('issuer')
-        self._require_crl_field('this_update')
-        self._require_crl_field('next_update')
+        self._require_crl_field('tbs_cert_list')
+        self._require_crl_field('signature_algorithm')
+        self._require_crl_field('signature')
+
+        self._require_crl_tbs_cert_list_field('issuer')
+        self._require_crl_tbs_cert_list_field('this_update')
+        self._require_crl_tbs_cert_list_field('next_update')
+        self._require_crl_tbs_cert_list_field('signature')
 
         CertificateRevocationList._require('country_name' in self.issuer.native, # ICAO 9303 part 12 section 7.1.1.1.1
             "Issuer field is missing field 'country_name'"
@@ -120,5 +125,10 @@ class CertificateRevocationList(CertificateList):
 
     def _require_crl_field(self, field: str):
         CertificateRevocationList._require(field in self,
+            "Missing required certificate field '{}'".format(field)
+        )
+
+    def _require_crl_tbs_cert_list_field(self, field: str):
+        CertificateRevocationList._require(field in self['tbs_cert_list'],
             "Missing required certificate field '{}'".format(field)
         )
