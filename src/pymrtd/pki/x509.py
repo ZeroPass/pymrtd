@@ -23,7 +23,7 @@ class Certificate(x509.Certificate):
         :return: Issuer country code. Note, can return None in non-conformant certificates.
         """
         country = None
-        if self.issuer is not None and 'country_name' in self.issuer:
+        if self.issuer is not None and 'country_name' in self.issuer.native:
             country = self.issuer.native['country_name']
         return country
 
