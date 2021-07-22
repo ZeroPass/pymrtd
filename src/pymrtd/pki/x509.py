@@ -82,10 +82,10 @@ class Certificate(x509.Certificate):
                 return True
         return False
 
-    def verify(self, issuingCert: x509.Certificate, checkConformance = False) -> None:
+    def verify(self, issuerCert: x509.Certificate, checkConformance = False) -> None:
         """
         Verifies certificate has all required fields and that issuing certificate did issue this certificate.
-        :param issuingCert: The certificate that issued this certificate
+        :param issuerCert: The certificate that issued this certificate
         :param checkConformance: X.509 certificate conformance verification, if False only signature will be verified.
                                  Conformance verification can also be done through checkConformance method.
         :raises CertificateVerificationError: On failed signature verification or failed Conformance check.
@@ -97,7 +97,7 @@ class Certificate(x509.Certificate):
         if checkConformance:
             self.checkConformance()
 
-        if not verify_cert_sig(self, issuingCert):
+        if not verify_cert_sig(self, issuerCert):
             raise CertificateVerificationError("Signature verification failed")
 
     @staticmethod
@@ -228,10 +228,10 @@ class CscaCertificate(Certificate):
             "Missing required field 'subjectKeyIdentifier' in SubjectKeyIdentifier extension"
         )
 
-    def verify(self, issuingCert: Optional[x509.Certificate] = None, checkConformance: bool = False):
+    def verify(self, issuerCert: Optional[x509.Certificate] = None, checkConformance: bool = False):
         """
         Verifies certificate has all required fields and that issuing certificate did issue this certificate.
-        :param issuingCert: (Optional) The certificate that issued this certificate.
+        :param issuerCert: (Optional) The certificate that issued this certificate.
                             If None, this certificate will be used as issuing certificate to verify the certificate signature.
         :param checkConformance: X.509 and ICAO 9303 CSCA conformance verification, if False only signature will be verified.
                                  Conformance verification can also be done through checkConformance method
@@ -239,9 +239,9 @@ class CscaCertificate(Certificate):
         :raises *Exception: If there was a problem in the process before signature is fully verified.
              See cert_utils.verify_sig
         """
-        if issuingCert is None:
-            issuingCert = self
-        super().verify(issuingCert, checkConformance)
+        if issuerCert is None:
+            issuerCert = self
+        super().verify(issuerCert, checkConformance)
 
 
 class MasterListSignerCertificate(Certificate):
@@ -278,10 +278,10 @@ class MasterListSignerCertificate(Certificate):
         # super()._require_extension_field('key_identifier')
         # Certificate._require(self.subjectKey is not None, "Missing required field 'subjectKeyIdentifier' in SubjectKeyIdentifier extension")
 
-    def verify(self, issuingCert: x509.Certificate, checkConformance: bool = False):
+    def verify(self, issuerCert: x509.Certificate, checkConformance: bool = False):
         """
         Verifies certificate has all required fields and that issuing certificate did issue this certificate.
-        :param issuingCert: The certificate that issued this certificate.
+        :param issuerCert: The certificate that issued this certificate.
         :param checkConformance: X.509 and ICAO 9303 master list signer certificate conformance verification,
                                  if False only signature will be verified.
                                  Conformance verification can also be done through checkConformance method
@@ -293,10 +293,10 @@ class MasterListSignerCertificate(Certificate):
                     # We do this check because not all master list issuers follow the specification rules and
                     # they use CSCA to sign master list instead of separate signer certificate issued by CSCA.
                     # See for example German master list no. 20190925)
-            CscaCertificate.load(self.dump()).verify(issuingCert, checkConformance)
+            CscaCertificate.load(self.dump()).verify(issuerCert, checkConformance)
         else:
             super()._require_extension_value('extended_key_usage', [id_icao_cscaMasterListSigningKey]) #icao 9303-p12 p20, p27
-            super().verify(issuingCert, checkConformance)
+            super().verify(issuerCert, checkConformance)
 
 
 class DocumentTypeListSyntax(asn1.Sequence):
@@ -422,14 +422,14 @@ class DocumentSignerCertificate(Certificate):
         #     "Missing required field 'subjectKeyIdentifier' in SubjectKeyIdentifier extension"
         # )
 
-    def verify(self, issuingCert: x509.Certificate, checkConformance: bool = False):
+    def verify(self, issuerCert: x509.Certificate, checkConformance: bool = False):
         """
         Verifies certificate has all required fields and that issuing certificate did issue this certificate.
-        :param issuingCert: The certificate that issued this certificate.
+        :param issuerCert: The certificate that issued this certificate.
         :param checkConformance: X.509 and ICAO 9303 DSC conformance verification, if False only signature will be verified.
                                  Conformance verification can also be done through checkConformance method
         :raises CertificateVerificationError: On failed signature verification or failed Conformance check.
         :raises *Exception: If there was a problem in the process before signature is fully verified.
              See cert_utils.verify_sig
         """
-        super().verify(issuingCert, checkConformance)
+        super().verify(issuerCert, checkConformance)
