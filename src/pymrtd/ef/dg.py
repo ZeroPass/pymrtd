@@ -101,22 +101,22 @@ class SecurityInfos(asn1.SetOf):
 
 class DataGroupNumber(asn1.Integer):
     _map = {
-        1: 'DG1',
-        2: 'DG2',
-        3: 'DG3',
-        4: 'DG4',
-        5: 'DG5',
-        6: 'DG6',
-        7: 'DG7',
-        8: 'DG8',
-        9: 'DG9',
-        10: 'DG10',
-        11: 'DG11',
-        12: 'DG12',
-        13: 'DG13',
-        14: 'DG14',
-        15: 'DG15',
-        16: 'DG16'
+        1: 'EF.DG1',
+        2: 'EF.DG2',
+        3: 'EF.DG3',
+        4: 'EF.DG4',
+        5: 'EF.DG5',
+        6: 'EF.DG6',
+        7: 'EF.DG7',
+        8: 'EF.DG8',
+        9: 'EF.DG9',
+        10: 'EF.DG10',
+        11: 'EF.DG11',
+        12: 'EF.DG12',
+        13: 'EF.DG13',
+        14: 'EF.DG14',
+        15: 'EF.DG15',
+        16: 'EF.DG16'
     }
 
     @property
@@ -126,7 +126,7 @@ class DataGroupNumber(asn1.Integer):
     def __eq__(self, other) -> bool:
         if isinstance(other, int):
             return self.value == other
-        elif isinstance(other, DataGroupNumber):
+        if isinstance(other, DataGroupNumber):
             return super().__eq__(other)
         return False
 
@@ -139,7 +139,7 @@ class DataGroupNumber(asn1.Integer):
                 value = 2
             elif value == 22: # DG4 tag
                 value = 4
-            elif (value not in DataGroupNumber._map):
+            elif value not in DataGroupNumber._map:
                 raise ValueError('Invalid data group number')
         super().set(value)
 

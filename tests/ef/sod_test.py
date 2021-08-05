@@ -45,7 +45,7 @@ def test_sod(datafiles):
     assert sod.ldsSecurityObject.dgHashAlgo['parameters'].native           == None
 
     assert len(sod.ldsSecurityObject.dgHashes)                             == 5
-    assert sod.ldsSecurityObject.dgHashes.native[0]['dataGroupNumber']     == 'DG1'
+    assert sod.ldsSecurityObject.dgHashes.native[0]['dataGroupNumber']     == 'EF.DG1'
     assert sod.ldsSecurityObject.dgHashes.children[0].number               == DataGroupNumber(1)
     assert sod.ldsSecurityObject.dgHashes.native[0]['dataGroupHashValue']  == bytes.fromhex('4170CA879FCE6A22FFEF1567FF88079F415C66EAD250AB5F23781AC2CDBF42B6')
     assert sod.ldsSecurityObject.dgHashes.children[0].hash                 == bytes.fromhex('4170CA879FCE6A22FFEF1567FF88079F415C66EAD250AB5F23781AC2CDBF42B6')
@@ -55,7 +55,7 @@ def test_sod(datafiles):
     assert sod.ldsSecurityObject.find(DataGroupNumber(1)).number           == DataGroupNumber(1)
     assert sod.ldsSecurityObject.find(DataGroupNumber(1)).hash             == bytes.fromhex('4170CA879FCE6A22FFEF1567FF88079F415C66EAD250AB5F23781AC2CDBF42B6')
 
-    assert sod.ldsSecurityObject.dgHashes.native[1]['dataGroupNumber']     == 'DG2'
+    assert sod.ldsSecurityObject.dgHashes.native[1]['dataGroupNumber']     == 'EF.DG2'
     assert sod.ldsSecurityObject.dgHashes.children[1].number               == DataGroupNumber(2)
     assert sod.ldsSecurityObject.dgHashes.native[1]['dataGroupHashValue']  == bytes.fromhex('A9A1B09DFD598087AB3FCE4AE2EC65B1A1525BD258BFC27DF4419F8A65E54745')
     assert sod.ldsSecurityObject.dgHashes.children[1].hash                 == bytes.fromhex('A9A1B09DFD598087AB3FCE4AE2EC65B1A1525BD258BFC27DF4419F8A65E54745')
@@ -65,7 +65,7 @@ def test_sod(datafiles):
     assert sod.ldsSecurityObject.find(DataGroupNumber(2)).number           == DataGroupNumber(2)
     assert sod.ldsSecurityObject.find(DataGroupNumber(2)).hash             == bytes.fromhex('A9A1B09DFD598087AB3FCE4AE2EC65B1A1525BD258BFC27DF4419F8A65E54745')
 
-    assert sod.ldsSecurityObject.dgHashes.native[2]['dataGroupNumber']     == 'DG3'
+    assert sod.ldsSecurityObject.dgHashes.native[2]['dataGroupNumber']     == 'EF.DG3'
     assert sod.ldsSecurityObject.dgHashes.children[2].number               == DataGroupNumber(3)
     assert sod.ldsSecurityObject.dgHashes.native[2]['dataGroupHashValue']  == bytes.fromhex('403E4D17C26EBC832411898161D8FD5D99C58EE865CB3759B529AA782C7EDE00')
     assert sod.ldsSecurityObject.dgHashes.children[2].hash                 == bytes.fromhex('403E4D17C26EBC832411898161D8FD5D99C58EE865CB3759B529AA782C7EDE00')
@@ -75,7 +75,7 @@ def test_sod(datafiles):
     assert sod.ldsSecurityObject.find(DataGroupNumber(3)).number           == DataGroupNumber(3)
     assert sod.ldsSecurityObject.find(DataGroupNumber(3)).hash            == bytes.fromhex('403E4D17C26EBC832411898161D8FD5D99C58EE865CB3759B529AA782C7EDE00')
 
-    assert sod.ldsSecurityObject.dgHashes.native[3]['dataGroupNumber']     == 'DG14'
+    assert sod.ldsSecurityObject.dgHashes.native[3]['dataGroupNumber']     == 'EF.DG14'
     assert sod.ldsSecurityObject.dgHashes.children[3].number               == DataGroupNumber(14)
     assert sod.ldsSecurityObject.dgHashes.native[3]['dataGroupHashValue']  == bytes.fromhex('CF5004FFCCD64E1A8BD3A42FD53814EC3D4481640BE1906D0ECFEB016EF6A6AE')
     assert sod.ldsSecurityObject.dgHashes.children[3].hash                 == bytes.fromhex('CF5004FFCCD64E1A8BD3A42FD53814EC3D4481640BE1906D0ECFEB016EF6A6AE')
@@ -85,7 +85,7 @@ def test_sod(datafiles):
     assert sod.ldsSecurityObject.find(DataGroupNumber(14)).number          == DataGroupNumber(14)
     assert sod.ldsSecurityObject.find(DataGroupNumber(14)).hash            == bytes.fromhex('CF5004FFCCD64E1A8BD3A42FD53814EC3D4481640BE1906D0ECFEB016EF6A6AE')
 
-    assert sod.ldsSecurityObject.dgHashes.native[4]['dataGroupNumber']     == 'DG4'
+    assert sod.ldsSecurityObject.dgHashes.native[4]['dataGroupNumber']     == 'EF.DG4'
     assert sod.ldsSecurityObject.dgHashes.children[4].number               == DataGroupNumber(4)
     assert sod.ldsSecurityObject.dgHashes.native[4]['dataGroupHashValue']  == bytes.fromhex('4C7A0F0DDAA473123834F1B0713ED9453D1D1D58BCE447FB1736D40A0761C17B')
     assert sod.ldsSecurityObject.dgHashes.children[4].hash                 == bytes.fromhex('4C7A0F0DDAA473123834F1B0713ED9453D1D1D58BCE447FB1736D40A0761C17B')
@@ -185,7 +185,7 @@ def test_sod(datafiles):
     assert sod.ldsSecurityObject.dgHashAlgo['parameters'].native           == None
 
     assert len(sod.ldsSecurityObject.dgHashes)                             == 6
-    assert sod.ldsSecurityObject.dgHashes.native[0]['dataGroupNumber']     == 'DG1'
+    assert sod.ldsSecurityObject.dgHashes.native[0]['dataGroupNumber']     == 'EF.DG1'
     assert sod.ldsSecurityObject.dgHashes.children[0].number               == DataGroupNumber(1)
     assert sod.ldsSecurityObject.dgHashes.native[0]['dataGroupHashValue']  == bytes.fromhex('51B6FC0EF1946F3A86D2A4C9557C5D8ECFF13113B4131089C5C48BF7291FFDF5')
     assert sod.ldsSecurityObject.dgHashes.children[0].hash                 == bytes.fromhex('51B6FC0EF1946F3A86D2A4C9557C5D8ECFF13113B4131089C5C48BF7291FFDF5')
@@ -195,7 +195,7 @@ def test_sod(datafiles):
     assert sod.ldsSecurityObject.find(DataGroupNumber(1)).number           == DataGroupNumber(1)
     assert sod.ldsSecurityObject.find(DataGroupNumber(1)).hash             == bytes.fromhex('51B6FC0EF1946F3A86D2A4C9557C5D8ECFF13113B4131089C5C48BF7291FFDF5')
 
-    assert sod.ldsSecurityObject.dgHashes.native[1]['dataGroupNumber']     == 'DG2'
+    assert sod.ldsSecurityObject.dgHashes.native[1]['dataGroupNumber']     == 'EF.DG2'
     assert sod.ldsSecurityObject.dgHashes.children[1].number               == DataGroupNumber(2)
     assert sod.ldsSecurityObject.dgHashes.native[1]['dataGroupHashValue']  == bytes.fromhex('A9A1B09DFD598087AB3FCE4AE2EC65B1A1525BD258BFC27DF4419F8A65E54745')
     assert sod.ldsSecurityObject.dgHashes.children[1].hash                 == bytes.fromhex('A9A1B09DFD598087AB3FCE4AE2EC65B1A1525BD258BFC27DF4419F8A65E54745')
@@ -205,7 +205,7 @@ def test_sod(datafiles):
     assert sod.ldsSecurityObject.find(DataGroupNumber(2)).number           == DataGroupNumber(2)
     assert sod.ldsSecurityObject.find(DataGroupNumber(2)).hash             == bytes.fromhex('A9A1B09DFD598087AB3FCE4AE2EC65B1A1525BD258BFC27DF4419F8A65E54745')
 
-    assert sod.ldsSecurityObject.dgHashes.native[2]['dataGroupNumber']     == 'DG3'
+    assert sod.ldsSecurityObject.dgHashes.native[2]['dataGroupNumber']     == 'EF.DG3'
     assert sod.ldsSecurityObject.dgHashes.children[2].number               == DataGroupNumber(3)
     assert sod.ldsSecurityObject.dgHashes.native[2]['dataGroupHashValue']  == bytes.fromhex('403E4D17C26EBC832411898161D8FD5D99C58EE865CB3759B529AA782C7EDE00')
     assert sod.ldsSecurityObject.dgHashes.children[2].hash                 == bytes.fromhex('403E4D17C26EBC832411898161D8FD5D99C58EE865CB3759B529AA782C7EDE00')
@@ -215,7 +215,7 @@ def test_sod(datafiles):
     assert sod.ldsSecurityObject.find(DataGroupNumber(3)).number           == DataGroupNumber(3)
     assert sod.ldsSecurityObject.find(DataGroupNumber(3)).hash            == bytes.fromhex('403E4D17C26EBC832411898161D8FD5D99C58EE865CB3759B529AA782C7EDE00')
 
-    assert sod.ldsSecurityObject.dgHashes.native[3]['dataGroupNumber']     == 'DG14'
+    assert sod.ldsSecurityObject.dgHashes.native[3]['dataGroupNumber']     == 'EF.DG14'
     assert sod.ldsSecurityObject.dgHashes.children[3].number               == DataGroupNumber(14)
     assert sod.ldsSecurityObject.dgHashes.native[3]['dataGroupHashValue']  == bytes.fromhex('A1A7B2285B954DD053253C1D851709F6380731176CC9EB1123546439C704108A')
     assert sod.ldsSecurityObject.dgHashes.children[3].hash                 == bytes.fromhex('A1A7B2285B954DD053253C1D851709F6380731176CC9EB1123546439C704108A')
@@ -225,7 +225,7 @@ def test_sod(datafiles):
     assert sod.ldsSecurityObject.find(DataGroupNumber(14)).number          == DataGroupNumber(14)
     assert sod.ldsSecurityObject.find(DataGroupNumber(14)).hash            == bytes.fromhex('A1A7B2285B954DD053253C1D851709F6380731176CC9EB1123546439C704108A')
 
-    assert sod.ldsSecurityObject.dgHashes.native[4]['dataGroupNumber']     == 'DG15'
+    assert sod.ldsSecurityObject.dgHashes.native[4]['dataGroupNumber']     == 'EF.DG15'
     assert sod.ldsSecurityObject.dgHashes.children[4].number               == DataGroupNumber(15)
     assert sod.ldsSecurityObject.dgHashes.native[4]['dataGroupHashValue']  == bytes.fromhex('5265ECB286F406D93EC5B8965659D45450D8DA1A97575DEF4EFC7303C7408730')
     assert sod.ldsSecurityObject.dgHashes.children[4].hash                 == bytes.fromhex('5265ECB286F406D93EC5B8965659D45450D8DA1A97575DEF4EFC7303C7408730')
@@ -235,7 +235,7 @@ def test_sod(datafiles):
     assert sod.ldsSecurityObject.find(DataGroupNumber(15)).number          == DataGroupNumber(15)
     assert sod.ldsSecurityObject.find(DataGroupNumber(15)).hash            == bytes.fromhex('5265ECB286F406D93EC5B8965659D45450D8DA1A97575DEF4EFC7303C7408730')
 
-    assert sod.ldsSecurityObject.dgHashes.native[5]['dataGroupNumber']     == 'DG4'
+    assert sod.ldsSecurityObject.dgHashes.native[5]['dataGroupNumber']     == 'EF.DG4'
     assert sod.ldsSecurityObject.dgHashes.children[5].number               == DataGroupNumber(4)
     assert sod.ldsSecurityObject.dgHashes.native[5]['dataGroupHashValue']  == bytes.fromhex('4C7A0F0DDAA473123834F1B0713ED9453D1D1D58BCE447FB1736D40A0761C17B')
     assert sod.ldsSecurityObject.dgHashes.children[5].hash                 == bytes.fromhex('4C7A0F0DDAA473123834F1B0713ED9453D1D1D58BCE447FB1736D40A0761C17B')
