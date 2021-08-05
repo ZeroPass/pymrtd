@@ -148,6 +148,15 @@ class DataGroup(ElementaryFile):
     class_ = 1
     method = 1
 
+    def __str__(self):
+        """
+        Returns string representation of self i.e. EF.DG<No>(fp=XXXXXXXXXXXXXXXX)
+        """
+        if self._str_rep is None:
+            self._str_rep = super().__str__()\
+                .replace("EF(", "{}(".format(self.number.native), 1)
+        return self._str_rep
+
     @property
     def number(self) -> DataGroupNumber:
         return DataGroupNumber(self.tag)

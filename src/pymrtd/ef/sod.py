@@ -167,6 +167,15 @@ class SOD(ElementaryFile):
         assert isinstance(value._sd.content, LDSSecurityObject)
         return value
 
+    def __str__(self):
+        """
+        Returns string representation of self i.e. EF.SOD(fp=XXXXXXXXXXXXXXXX)
+        """
+        if self._str_rep is None:
+            self._str_rep = super().__str__()\
+                .replace("EF(", "EF.SOD(", 1)
+        return self._str_rep
+
     @property
     def dsCertificates(self) -> Union[List[x509.DocumentSignerCertificate], None]:
         ''' Returns list of document signer certificates if present, otherwise None. '''

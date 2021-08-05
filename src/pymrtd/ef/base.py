@@ -14,6 +14,7 @@ class ElementaryFileError(ValueError):
 
 class ElementaryFile(asn1.Asn1Value):
     _content_spec = None
+    _str_rep = None
 
     def __init__(self, class_=None, tag=None, method=None, contents=None, spec=None, **kwargs):
 
@@ -24,6 +25,14 @@ class ElementaryFile(asn1.Asn1Value):
         self.method   = method
         self._content = None
         self._fp      = None
+
+    def __str__(self):
+        """
+        Returns string representation of self i.e. EF(fp=XXXXXXXXXXXXXXXX)
+        """
+        if self._str_rep is None:
+            self._str_rep = "{}(fp={})".format("EF", self.fingerprint)
+        return self._str_rep
 
     @classmethod
     def load(cls, encoded_data: bytes, strict=False): #pylint: disable=arguments-differ
