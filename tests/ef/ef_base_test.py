@@ -1,4 +1,4 @@
-from asn1crypto.core import CLASS_NAME_TO_NUM_MAP, METHOD_NUM_TO_NAME_MAP
+from asn1crypto.core import CLASS_NAME_TO_NUM_MAP
 from pymrtd.ef.base import ElementaryFile
 import pytest
 

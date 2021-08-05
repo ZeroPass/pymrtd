@@ -1,3 +1,4 @@
+import hashlib
 import asn1crypto.core as asn1
 import asn1crypto.parser as asn1Parser
 
@@ -20,8 +21,9 @@ class ElementaryFile(asn1.Asn1Value):
             self._content_spec = spec
 
         super().__init__(class_=class_, tag=tag, contents=contents, *kwargs)
-        self.method = method
+        self.method   = method
         self._content = None
+        self._fp      = None
 
     @classmethod
     def load(cls, encoded_data: bytes, strict=False): #pylint: disable=arguments-differ
@@ -60,6 +62,16 @@ class ElementaryFile(asn1.Asn1Value):
         # Force parsing of content. This is done in order for any invalid content to rise an exception
         value.content #pylint: disable=pointless-statement
         return value
+
+    @property
+    def fingerprint(self) -> str:
+        """
+        Returns hex str of the first 8 bytes of sha256 hash of self.
+        """
+        if self._fp is None:
+            d = hashlib.sha256(self.dump()).digest()
+            self._fp = d[0:8].hex().upper().rjust(16, '0')
+        return self._fp
 
     @property
     def content(self):

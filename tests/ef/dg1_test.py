@@ -17,6 +17,7 @@ def test_dg1():
     tv_dg1 = bytes.fromhex('615D5F1F5A493C4E4C44584938353933354638363939393939393939303C3C3C3C3C3C3732303831343846313130383236384E4C443C3C3C3C3C3C3C3C3C3C3C3456414E3C4445523C535445454E3C3C4D415249414E4E453C4C4F55495345')
     dg1 = ef.DG1.load(tv_dg1)
     assert dg1.dump()                 == tv_dg1
+    assert dg1.fingerprint            == "68629FEB5E8B7D0D"
     assert dg1.tag                    == 1
     assert dg1.number                 == DataGroupNumber(1)
     assert dg1.mrz.type               == 'td1'
@@ -44,6 +45,7 @@ def test_dg1():
     tv_dg1 = bytes.fromhex('614B5F1F48493C415441534D4954483C3C4A4F484E3C543C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3132333435363738393C484D44373430363232314D31303132333132303132323C3C3C30')
     dg1 = ef.DG1.load(tv_dg1)
     assert dg1.dump()                 == tv_dg1
+    assert dg1.fingerprint            == "212982B17F733D8A"
     assert dg1.tag                    == 1
     assert dg1.number                 == DataGroupNumber(1)
     assert dg1.mrz.type               == 'td2'
@@ -62,6 +64,7 @@ def test_dg1():
     tv_dg1 = bytes.fromhex('615B5f1f58503c55544f4552494b53534f4e3c3c414e4e413c4d415249413c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c4c38393839303243333655544f3734303831323246313230343135395a45313834323236423c3c3c3c3c3130')
     dg1 = ef.DG1.load(tv_dg1)
     assert dg1.dump()                    == tv_dg1
+    assert dg1.fingerprint               == "432BC07D1C637793"
     assert dg1.tag                       == 1
     assert dg1.number                    == DataGroupNumber(1)
     assert dg1.mrz.type                  == 'td3'
