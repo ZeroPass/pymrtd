@@ -13,8 +13,8 @@ class CertificateVerificationError(Exception):
 class Certificate(x509.Certificate):
     @property
     def fingerprint(self) -> str:
-        """SHA256 hash string of this object"""
-        return self.sha256.hex()
+        """Returns hex str of the first 8 bytes of sha256 hash of self"""
+        return self.sha256[0:8].hex().upper().rjust(16, '0')
 
     @property
     def issuerCountry(self) -> Optional[str]:
