@@ -143,29 +143,28 @@ class SOD(ElementaryFile):
     @classmethod
     def load(cls, encoded_data, strict=False):
         # Parse parent type
-        value = cast(cls, super().load(encoded_data, strict=strict))
+        s = cast(cls, super(SOD, cls).load(encoded_data, strict=strict))
+        assert isinstance(s, SOD)
 
-        ci = value.content
+        ci = s.content
         ctype = ci['content_type'].native
         if ctype != 'signed_data': # ICAO 9303-10-p21
             raise SODError("Invalid master list content type: {}, should be 'signed_data'".format(ctype))
 
-        #pylint: disable=protected-access
-        value._sd = ci['content']
-        cver = value._sd.version.native
-        if cver != 'v1' and cver != 'v3' and cver != 'v4': # RFC3369
+        cver = s.signedData.version.native
+        if cver not in ('v1', 'v3', 'v4'): # RFC3369
             raise SODError("Invalid SignedData version: {}".format(cver))
 
-        if value._sd.contentType.dotted != oids.id_mrtd_ldsSecurityObject:
-            raise SODError("Invalid encapContentInfo type: {}, should be {}".format(value._sd.contentType.dotted, oids.id_mrtd_ldsSecurityObject))
+        if s.signedData.contentType.dotted != oids.id_mrtd_ldsSecurityObject:
+            raise SODError("Invalid encapContentInfo type: {}, should be {}".format(s.signedData.contentType.dotted, oids.id_mrtd_ldsSecurityObject))
 
-        if 1 < value.ldsSecurityObject.version.value < 0:
+        if 1 < s.ldsSecurityObject.version.value < 0:
             raise SODError("Unsupported LDSSecurityObject version: {}, should be 0 or 1"
-                .format(value.ldsSecurityObject.version.value))
+                .format(s.ldsSecurityObject.version.value))
 
-        assert isinstance(value._sd.certificates[0], x509.DocumentSignerCertificate) if len(value._sd.certificates) else True
-        assert isinstance(value._sd.content, LDSSecurityObject)
-        return value
+        assert isinstance(s.signedData.certificates[0], x509.DocumentSignerCertificate) if len(s.signedData.certificates) else True
+        assert isinstance(s.signedData.content, LDSSecurityObject)
+        return s
 
     def __str__(self):
         """
@@ -177,19 +176,23 @@ class SOD(ElementaryFile):
         return self._str_rep
 
     @property
+    def signedData(self) -> SODSignedData:
+        return self.content['content']
+
+    @property
     def dsCertificates(self) -> Union[List[x509.DocumentSignerCertificate], None]:
         ''' Returns list of document signer certificates if present, otherwise None. '''
-        return self._sd.certificates #pylint: disable=no-member
+        return self.signedData.certificates
 
     @property
     def ldsSecurityObject(self) -> LDSSecurityObject:
-        return self._sd.content #pylint: disable=no-member
+        return self.signedData.content
 
     @property
     def signers(self) -> List[SignerIdentifier]:
         ''' Returns list of signer identifiers which signed this document. '''
         sids = []
-        for si in self._sd.signerInfos: #pylint: disable=no-member
+        for si in self.signedData.signerInfos:
             sids.append(si['sid'])
         return sids
 
@@ -199,6 +202,6 @@ class SOD(ElementaryFile):
         :raises: SODError - if verification fails or other error occurs.
         '''
         try:
-            self._sd.verify(issuer_dsc_certs) #pylint: disable=no-member
+            self.signedData.verify(issuer_dsc_certs)
         except cms.MrtdSignedDataError as e:
             raise SODError(str(e)) from e
