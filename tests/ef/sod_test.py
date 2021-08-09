@@ -37,6 +37,7 @@ def test_sod(datafiles):
     assert len(sod.content.native['content']['digest_algorithms'])             == 1
     assert sod.content.native['content']['digest_algorithms'][0]['algorithm']  == 'sha256'
     assert sod.content.native['content']['encap_content_info']['content_type'] == 'ldsSecurityObject'
+    assert sod.signedData.contentType.native                                   == 'ldsSecurityObject'
 
     # LDS SecurityObject test
     assert sod.ldsSecurityObject.version.native                            == 'v0'
@@ -113,25 +114,25 @@ def test_sod(datafiles):
     assert sod.ldsSecurityObject.contains(tv_dg15)              == False
 
     # DSC certificate check
-    assert len(sod.dsCertificates) == 1
+    assert len(sod.dscCertificates) == 1
     with open(datafiles / 'dsc_de_0142fd5cf927.cer', "rb") as dsc:
         dsc = DocumentSignerCertificate.load(dsc.read())
-        assert sod.dsCertificates[0].dump() == dsc.dump()
+        assert sod.dscCertificates[0].dump() == dsc.dump()
 
     # Verify signers info
-    assert len(sod.content.native['content']['signer_infos'])                    == 1
-    assert sod.content.native['content']['signer_infos'][0]['version']           == 'v1'
-    assert sod.content.native['content']['signer_infos'][0]['digest_algorithm']  == { 'algorithm' :'sha256', 'parameters': None }
-    assert sod.content.native['content']['signer_infos'][0]['digest_algorithm']  == sod.content.native['content']['digest_algorithms'][0]
-    assert len(sod.content.native['content']['signer_infos'][0]['signed_attrs']) == 2
-    assert sod.content.native['content']['signer_infos'][0]['signed_attrs'][0]   == { 'type' : 'content_type', 'values' : ['ldsSecurityObject'] }
-    assert sod.content.native['content']['signer_infos'][0]['signed_attrs'][1]   == {
+    assert len(sod.signers)                          == 1
+    assert sod.signers[0].version.native             == 'v1'
+    assert sod.signers[0]['digest_algorithm'].native == { 'algorithm' :'sha256', 'parameters': None }
+    assert sod.signers[0]['digest_algorithm'].native == sod.signedData.native['digest_algorithms'][0]
+    assert len(sod.signers[0].signedAttributes)      == 2
+    assert sod.signers[0].signedAttributes[0].native == { 'type' : 'content_type', 'values' : ['ldsSecurityObject'] }
+    assert sod.signers[0].signedAttributes[1].native == {
         'type' : 'message_digest',
         'values' : [bytes.fromhex('B46A0D05E280F398EFEEEBFF67E78C736ADD15E75670B1AD4C6C534E8187B9D6')]
     }
 
-    assert len(sod.content.native['content']['signer_infos'][0]['signature_algorithm']) == 2
-    assert sod.content.native['content']['signer_infos'][0]['signature_algorithm']      == {
+    assert len(sod.signers[0].signatureAlgorithm.native) == 2
+    assert sod.signers[0].signatureAlgorithm.native      == {
         'algorithm' : 'rsassa_pss',
         'parameters' : {
             'hash_algorithm' : { 'algorithm' :'sha256', 'parameters': None },
@@ -144,25 +145,55 @@ def test_sod(datafiles):
         }
     }
 
-    assert sod.content.native['content']['signer_infos'][0]['signature'] == bytes.fromhex('761106E9FBD2ED1B2F75027DAF13975A4C7ADFC54D675D2DD2BBA762BC073D9288AF4B1B87BA7987D53FA1D321D1943F58573F4913424E2BCDD080C2D8927A985BE2BDCAF6B8FE21EC99D8227F052ED118B7EAE6029F57889CA723912076916355068EBBCF46F19C3FBB49DCF1E9F3B10DF11E270FAC11BC6D1E3C5ADF68E0E46381A45F737E91EE9F889DB6D418AA2C6C3213C47FBC2787F0134384B343CC921A9A03878EBA79BA00901115495942C3E7B0E4DA09E0916C172228AD28D9DBEC915F32E58D7431480443030C2C3D1DEF840223FED41A92C5B30AA2CE9ED346CBB8BB172A2EFF73E0B8CFEC89071A07DC62627421F808DA541A58A1A572E7583F')
-    assert sod.content.native['content']['signer_infos'][0]['unsigned_attrs'] == None
+    assert sod.signers[0].signature                == bytes.fromhex('761106E9FBD2ED1B2F75027DAF13975A4C7ADFC54D675D2DD2BBA762BC073D9288AF4B1B87BA7987D53FA1D321D1943F58573F4913424E2BCDD080C2D8927A985BE2BDCAF6B8FE21EC99D8227F052ED118B7EAE6029F57889CA723912076916355068EBBCF46F19C3FBB49DCF1E9F3B10DF11E270FAC11BC6D1E3C5ADF68E0E46381A45F737E91EE9F889DB6D418AA2C6C3213C47FBC2787F0134384B343CC921A9A03878EBA79BA00901115495942C3E7B0E4DA09E0916C172228AD28D9DBEC915F32E58D7431480443030C2C3D1DEF840223FED41A92C5B30AA2CE9ED346CBB8BB172A2EFF73E0B8CFEC89071A07DC62627421F808DA541A58A1A572E7583F')
+    assert sod.signers[0].native['unsigned_attrs'] == None
 
     # Check signers
     assert len(sod.signers) == 1
-    assert type(sod.signers[0].chosen) == IssuerAndSerialNumber
-    assert sod.signers[0].native['issuer'] == {
+    assert sod.signers[0].version.native       == 'v1'
+    assert type(sod.signers[0].sid.chosen)     == IssuerAndSerialNumber
+    assert type(sod.signers[0].id)             == IssuerAndSerialNumber
+    assert sod.signers[0].sid.native['issuer'] == {
         'country_name' : 'DE',
         'organization_name' : 'HJP Consulting',
         'organizational_unit_name' : 'Country Signer',
         'common_name' : 'HJP PB CS'
     }
-    assert sod.signers[0].native['issuer']        == sod.dsCertificates[0].issuer.native
-    assert sod.signers[0].native['serial_number'] == 1387230198055
-    assert sod.signers[0].native['serial_number'] == sod.dsCertificates[0].serial_number
+    assert sod.signers[0].sid.native['issuer']        == sod.dscCertificates[0].issuer.native
+    assert sod.signers[0].sid.native['serial_number'] == 1387230198055
+    assert sod.signers[0].sid.native['serial_number'] == sod.dscCertificates[0].serial_number
+    assert sod.signers[0].signingTime                 == None
+    assert sod.signers[0].signature                   == bytes.fromhex('761106E9FBD2ED1B2F75027DAF13975A4C7ADFC54D675D2DD2BBA762BC073D9288AF4B1B87BA7987D53FA1D321D1943F58573F4913424E2BCDD080C2D8927A985BE2BDCAF6B8FE21EC99D8227F052ED118B7EAE6029F57889CA723912076916355068EBBCF46F19C3FBB49DCF1E9F3B10DF11E270FAC11BC6D1E3C5ADF68E0E46381A45F737E91EE9F889DB6D418AA2C6C3213C47FBC2787F0134384B343CC921A9A03878EBA79BA00901115495942C3E7B0E4DA09E0916C172228AD28D9DBEC915F32E58D7431480443030C2C3D1DEF840223FED41A92C5B30AA2CE9ED346CBB8BB172A2EFF73E0B8CFEC89071A07DC62627421F808DA541A58A1A572E7583F')
+    assert sod.signers[0].signedAttributes[0].native  == { 'type' : 'content_type', 'values' : ['ldsSecurityObject'] }
+    assert sod.signers[0].signedAttributes[1].native  == {
+        'type' : 'message_digest',
+        'values' : [bytes.fromhex('B46A0D05E280F398EFEEEBFF67E78C736ADD15E75670B1AD4C6C534E8187B9D6')]
+    }
+    assert sod.signers[0]['unsigned_attrs'].native    == None
+    assert sod.signers[0].contentType                 == sod.signedData.contentType
+    assert sod.signers[0].signedDigest                == bytes.fromhex('B46A0D05E280F398EFEEEBFF67E78C736ADD15E75670B1AD4C6C534E8187B9D6')
+    assert sod.signers[0].signatureAlgorithm.native   == {
+        'algorithm' : 'rsassa_pss',
+        'parameters' : {
+            'hash_algorithm' : { 'algorithm' :'sha256', 'parameters': None },
+            'mask_gen_algorithm' : {
+                'algorithm' : 'mgf1',
+                'parameters' : { 'algorithm' :'sha256', 'parameters': None }
+            },
+            'salt_length' : 32,
+            'trailer_field' : 'trailer_field_bc'
+        }
+    }
+
+    # Verify signed content hash and signer info signature
+    h = sod.signers[0].contentHasher
+    h.update(sod.signedData.content.dump())
+    assert h.finalize() == sod.signers[0].signedDigest
+    assert sod.getDscCertificate(sod.signers[0]).dump() == sod.dscCertificates[0].dump()
+    sod.signers[0].verifySignedAttributes(sod.dscCertificates[0])
 
     # Verify SOD signature
-    sod.verify()
-
+    sod.verify(sod.signers[0], sod.dscCertificates[0])
 
     # Test vector taken from https://www.etsi.org/
     # https://www.etsi.org/deliver/etsi_tr/103200_103299/103200/01.01.01_60/tr_103200v010101p.pdf
@@ -177,6 +208,7 @@ def test_sod(datafiles):
     assert len(sod.content.native['content']['digest_algorithms'])             == 1
     assert sod.content.native['content']['digest_algorithms'][0]['algorithm']  == 'sha256'
     assert sod.content.native['content']['encap_content_info']['content_type'] == 'ldsSecurityObject'
+    assert sod.signedData.contentType.native                                   == 'ldsSecurityObject'
 
     # LDS SecurityObject test
     assert sod.ldsSecurityObject.version.native                            == 'v0'
@@ -267,10 +299,10 @@ def test_sod(datafiles):
     assert sod.ldsSecurityObject.contains(tv_dg15)              == True
 
     # DSC certificate check
-    assert len(sod.dsCertificates) == 1
+    assert len(sod.dscCertificates) == 1
     with open(datafiles / 'dsc_de_0130846f2b3e.cer', "rb") as dsc:
         dsc = DocumentSignerCertificate.load(dsc.read())
-        assert sod.dsCertificates[0].dump() == dsc.dump()
+        assert sod.dscCertificates[0].dump() == dsc.dump()
 
     # Verify signers info
     assert len(sod.content.native['content']['signer_infos'])                    == 1
@@ -303,19 +335,50 @@ def test_sod(datafiles):
 
     # Check signers
     assert len(sod.signers) == 1
-    assert type(sod.signers[0].chosen) == IssuerAndSerialNumber
-    assert sod.signers[0].native['issuer'] == {
+    assert sod.signers[0].version.native       == 'v1'
+    assert type(sod.signers[0].sid.chosen)     == IssuerAndSerialNumber
+    assert type(sod.signers[0].id)             == IssuerAndSerialNumber
+    assert sod.signers[0].sid.native['issuer'] == {
         'country_name' : 'DE',
         'organization_name' : 'ETSI',
         'organizational_unit_name' : 'Country Signer',
         'common_name' : 'ETSI CS'
     }
-    assert sod.signers[0].native['issuer']        == sod.dsCertificates[0].issuer.native
-    assert sod.signers[0].native['serial_number'] == 1307891936062
-    assert sod.signers[0].native['serial_number'] == sod.dsCertificates[0].serial_number
+    assert sod.signers[0].sid.native['issuer']        == sod.dscCertificates[0].issuer.native
+    assert sod.signers[0].sid.native['serial_number'] == 1307891936062
+    assert sod.signers[0].sid.native['serial_number'] == sod.dscCertificates[0].serial_number
+    assert sod.signers[0].signingTime                 == None
+    assert sod.signers[0].signature                   == bytes.fromhex('599622056634871c86d5161cca6af851f14148e0e7eb79b1186dd6bedf5bd0343edb6c49b664e9fb459e742ca83358ce83e6b225a0cbfa7c3e9c6af6d5bc2f4040dd47bf24cacb06fbdd933eefad360542656e1f65e0010b8eae4da084fc7b78ecb0ced647580bd1e8e2f8660252721e6dc8bd83a8ebe27f780fdbcbea49d24c6a8a596ba4f4673a04409f2c1ea1cbc6802c9748dd5b2df042391ba87650447c7e3bad05553acdeb96972e3907f425571d767f82219e02bb8839e7fec9cfe07dcb88b5831a511383dadf5c7c0cb1ce1bd6c2b8b02c2c20db27402dd3b0ce171993c417d065dd9a0b278e641cf51babbcca1128a400ed4ab7c0fd531e4d1e475c')
+    assert sod.signers[0].signedAttributes[0].native  == { 'type' : 'content_type', 'values' : ['ldsSecurityObject'] }
+    assert sod.signers[0].signedAttributes[1].native  == {
+        'type' : 'message_digest',
+        'values' : [bytes.fromhex('b07b3583840a50f05e0b0ac5c8310629314b377d2f843fc82110a3b072be5227')]
+    }
+    assert sod.signers[0]['unsigned_attrs'].native    == None
+    assert sod.signers[0].contentType                 == sod.signedData.contentType
+    assert sod.signers[0].signedDigest                == bytes.fromhex('b07b3583840a50f05e0b0ac5c8310629314b377d2f843fc82110a3b072be5227')
+    assert sod.signers[0].signatureAlgorithm.native   == {
+        'algorithm' : 'rsassa_pss',
+        'parameters' : {
+            'hash_algorithm' : { 'algorithm' :'sha256', 'parameters': None },
+            'mask_gen_algorithm' : {
+                'algorithm' : 'mgf1',
+                'parameters' : { 'algorithm' :'sha256', 'parameters': None }
+            },
+            'salt_length' : 32,
+            'trailer_field' : 'trailer_field_bc'
+        }
+    }
+
+    # Verify signed content hash and signer info signature
+    h = sod.signers[0].contentHasher
+    h.update(sod.signedData.content.dump())
+    assert h.finalize() == sod.signers[0].signedDigest
+    assert sod.getDscCertificate(sod.signers[0]).dump() == sod.dscCertificates[0].dump()
+    sod.signers[0].verifySignedAttributes(sod.dscCertificates[0])
 
     # Verify SOD signature
-    sod.verify()
+    sod.verify(sod.signers[0], sod.dscCertificates[0])
 
 @pytest.mark.depends(on=['test_sod'])
 def test_fuzz_sod():
@@ -330,7 +393,7 @@ def test_fuzz_sod():
         sod = ef.SOD.load(tv_sod)
         tv_dg1 = ef.DG1.load(bytes.fromhex('615B5F1F58503C443C3C4D55535445524D414E4E3C3C4552494B413C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C433131543030324A4D34443C3C3936303831323246313331303331373C3C3C3C3C3C3C3C3C3C3C3C3C3C3C36'))
         assert sod.ldsSecurityObject.contains(tv_dg1) == False
-        sod.verify()
+        sod.verify(sod.signers[0], sod.getDscCertificate(sod.signers[0]))
 
     with pytest.raises(ef.sod.SODError, match="Signature verification failed"):
         # Test vector taken from https://www.etsi.org/
@@ -343,7 +406,7 @@ def test_fuzz_sod():
         sod = ef.SOD.load(tv_sod)
         tv_dg1 = ef.DG1.load(bytes.fromhex('615B5F1F58503C443C3C4D55535445524D414E4E3C3C4552494B413C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C433131543030324A4D34443C3C3936303831323246313331303331373C3C3C3C3C3C3C3C3C3C3C3C3C3C3C36'))
         assert sod.ldsSecurityObject.contains(tv_dg1) == True
-        sod.verify()
+        sod.verify(sod.signers[0], sod.getDscCertificate(sod.signers[0]))
 
     with pytest.raises(ef.sod.SODError, match="Content digest doesn't match signed digest"):
         # Test vector taken from https://www.etsi.org/
@@ -356,7 +419,7 @@ def test_fuzz_sod():
         sod = ef.SOD.load(tv_sod)
         tv_dg14 = ef.DG14.load(bytes.fromhex('6E82014A3182014630820122060904007F000702020102308201133081D406072A8648CE3D02013081C8020101302806072A8648CE3D0101021D00D7C134AA264366862A18302575D1D787B09F075797DA89F57EC8C0FF303C041C68A5E62CA9CE6C1C299803A6C1530B514E182AD8B0042A59CAD29F43041C2580F63CCFE44138870713B1A92369E33E2135D266DBB372386C400B0439040D9029AD2C7E5CF4340823B2A87DC68C9E4CE3174C1E6EFDEE12C07D58AA56F772C0726F24C6B89E4ECDAC24354B9E99CAA3F6D3761402CD021D00D7C134AA264366862A18302575D0FB98D116BC4B6DDEBCA3A5A7939F020101033A00047BEAAD1C2738A816525EE6B96823028B975E6EA1A2284105A6AAE2A42A2D83EFF9FAC24EE4ECCFCB1214AB3AD10C01782D465532B8D27E29300F060A04007F00070202030201020101300D060804007F0007020202020101'))
         assert sod.ldsSecurityObject.contains(tv_dg14) == False
-        sod.verify()
+        sod.verify(sod.signers[0], sod.getDscCertificate(sod.signers[0]))
 
     # Test vector taken from https://www.etsi.org/
     # https://www.etsi.org/deliver/etsi_tr/103200_103299/103200/01.01.01_60/tr_103200v010101p.pdf
@@ -368,7 +431,7 @@ def test_fuzz_sod():
     sod = ef.SOD.load(tv_sod)
     tv_dg1 = ef.DG1.load(bytes.fromhex('615B5F1F58503C53553C4D55535445524D414E4E3C3C4552494B413C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C3C433131543030324A4D3453553C3936303831323246313331303331373C3C3C3C3C3C3C3C3C3C3C3C3C3C3C36'))
     assert sod.ldsSecurityObject.contains(tv_dg1) == False
-    sod.verify()
+    sod.verify(sod.signers[0], sod.getDscCertificate(sod.signers[0]))
 
     # Test vector taken from https://www.etsi.org/
     # https://www.etsi.org/deliver/etsi_tr/103200_103299/103200/01.01.01_60/tr_103200v010101p.pdf
