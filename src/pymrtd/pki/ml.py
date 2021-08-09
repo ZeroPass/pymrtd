@@ -1,9 +1,9 @@
 
-from typing import cast
+from typing import List, Optional, cast
 import asn1crypto.core as asn1
 
 from . import cms #pylint: disable=relative-beyond-top-level
-from .x509 import CscaCertificate, MasterListSignerCertificate #pylint: disable=relative-beyond-top-level
+from .x509 import Certificate, CscaCertificate, MasterListSignerCertificate #pylint: disable=relative-beyond-top-level
 from .oids import id_icao_cscaMasterList #pylint: disable=relative-beyond-top-level
 
 
@@ -84,9 +84,26 @@ class CscaMasterList(MlContentInfo):
         return self['content']
 
     @property
+    def signers(self) -> cms.SignerInfos:
+        ''' Returns list of SignerInfo which signed this file. '''
+        return self.signedData.signers
+
+    @property
     def signerCertificates(self) -> Optional[List[Certificate]]:
         ''' Returns list of Master List Signer certificates if present, otherwise None. '''
         return self.signedData.certificates
+
+    def getSignerCertificate(self, si: cms.SignerInfo) -> Optional[Certificate]:
+        '''
+        Returns signer certificates from the list of `signerCertificates` which signed `si` object.
+        :param si: Signer object for which to return DSC certificate.
+        :return: x509.Certificate object or None if certificate is not found.
+        :raises CscaMasterListError: If `si` object is not version v1 or v3
+        '''
+        try:
+            return self.signedData.getCertificate(si)
+        except Exception as e:
+            raise CscaMasterListError(e) from e
 
     @property
     def cscaList(self) -> CscaList:

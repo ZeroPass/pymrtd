@@ -180,21 +180,30 @@ class SOD(ElementaryFile):
         return self.content['content']
 
     @property
-    def dsCertificates(self) -> Union[List[x509.DocumentSignerCertificate], None]:
-        ''' Returns list of document signer certificates if present, otherwise None. '''
-        return self.signedData.certificates
-
-    @property
     def ldsSecurityObject(self) -> LDSSecurityObject:
         return self.signedData.content
 
     @property
-    def signers(self) -> List[SignerIdentifier]:
-        ''' Returns list of signer identifiers which signed this document. '''
-        sids = []
-        for si in self.signedData.signerInfos:
-            sids.append(si['sid'])
-        return sids
+    def dscCertificates(self) -> Optional[List[x509.DocumentSignerCertificate]]:
+        ''' Returns list of document signer certificates if present, otherwise None. '''
+        return self.signedData.certificates
+
+    def getDscCertificate(self, si: cms.SignerInfo) -> Optional[x509.DocumentSignerCertificate]:
+        '''
+        Returns document signer certificates from the list of `dscCertificates` which signed `si` object.
+        :param si: Signer object for which to return DSC certificate.
+        :return: x509.DocumentSignerCertificate object or None if DSC is not found.
+        :raises SODError: If `si` object is not version v1 or v3
+        '''
+        try:
+            return self.signedData.getCertificate(si)
+        except Exception as e:
+            raise SODError(e) from e
+
+    @property
+    def signers(self) -> cms.SignerInfos:
+        ''' Returns list of SignerInfo which signed this file. '''
+        return self.signedData.signers
 
     def verify(self, si: cms.SignerInfo, dsc: x509.DocumentSignerCertificate) -> None:
         '''
