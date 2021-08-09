@@ -61,41 +61,44 @@ class CscaMasterList(MlContentInfo):
             raise CscaMasterListError("Invalid master list content type: {}, should be 'signed_data'".format(ctype))
 
         #pylint: disable=protected-access
-        ci._sd = ci['content']
-        cver = ci._sd.version.native
+
+        cver = ci.signedData.version.native
         if cver != 'v3': # ICAO 9303-12-p25
             raise CscaMasterListError("Invalid SignedData version: {}, should be 'v3'".format(cver))
 
-        if ci._sd.contentType.dotted != id_icao_cscaMasterList:
-            raise CscaMasterListError("Invalid encapContentInfo type: {}, should be '{}'".format(ci._sd.contentType.dotted, id_icao_cscaMasterList))
+        if ci.signedData.contentType.dotted != id_icao_cscaMasterList:
+            raise CscaMasterListError("Invalid encapContentInfo type: {}, should be '{}'".format(ci.signedData.contentType.dotted, id_icao_cscaMasterList))
 
-        if ci._sd.content.version != 0: # ICAO 9303-12-p27
-            raise CscaMasterListError("Unsupported encapContentInfo version: {}, should be 0".format(ci._sd.version))
+        if ci.signedData.content.version != 0: # ICAO 9303-12-p27
+            raise CscaMasterListError("Unsupported encapContentInfo version: {}, should be 0".format(ci.signedData.version))
 
-        if len(ci._sd.certificates) < 1:
+        if len(ci.signedData.certificates) < 1:
             raise CscaMasterListError("No master list signer certificate found")
 
-        assert isinstance(ci._sd.certificates[0], MasterListSignerCertificate)
-        assert isinstance(ci._sd.content, CscaList)
+        assert isinstance(ci.signedData.certificates[0], MasterListSignerCertificate)
+        assert isinstance(ci.signedData.content, CscaList)
         return ci
 
     @property
-    def signerCertificates(self):
-        ''' Returns the list of Master List Signer certificates. '''
-        return self._sd.certificates
+    def signedData(self) -> MlSignedData:
+        return self['content']
+
+    @property
+    def signerCertificates(self) -> Optional[List[Certificate]]:
+        ''' Returns list of Master List Signer certificates if present, otherwise None. '''
+        return self.signedData.certificates
 
     @property
     def cscaList(self) -> CscaList:
         ''' Returns list of CSCAs '''
-        return self._sd.content
+        return self.signedData.content
 
-    def verify(self) -> None:
+    def verify(self, si: cms.SignerInfo, issuerCert: Certificate) -> None:
         '''
         Verifies every SignerInfo object and the digital signature over content.
         On verification failure a CscaMasterListError exception is risen.
         '''
-
         try:
-            self._sd.verify()
+            self.signedData.verify(si, issuerCert)
         except cms.MrtdSignedDataError as e:
-            raise CscaMasterListError(str(e)) from e
+            raise CscaMasterListError(e) from e

@@ -196,12 +196,14 @@ class SOD(ElementaryFile):
             sids.append(si['sid'])
         return sids
 
-    def verify(self, issuer_dsc_certs: Optional[List[x509.DocumentSignerCertificate]] = []) -> None: #pylint: disable=dangerous-default-value
+    def verify(self, si: cms.SignerInfo, dsc: x509.DocumentSignerCertificate) -> None:
         '''
-        Verifies every stored digital signature made over signed LdsSecurityObject.
-        :raises: SODError - if verification fails or other error occurs.
+        Verifies LdsSecurityObject was signed by `dsc`.
+        :param si: The signer info object of `dsc` certificate.
+        :param dsc: The DSC certificate which issued this EF.SOD.
+        :raises: SODError - if verification fails or other some error occurs.
         '''
         try:
-            self.signedData.verify(issuer_dsc_certs)
+            self.signedData.verify(si, dsc)
         except cms.MrtdSignedDataError as e:
-            raise SODError(str(e)) from e
+            raise SODError(e) from e

@@ -1,4 +1,5 @@
 from asn1crypto import algos, cms
+from datetime import datetime
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -14,10 +15,142 @@ def cms_register_content_type(name, oid):
     else:
         cms.ContentType._reverse_map[name] = oid #pylint: disable=protected-access
 
-
 def cms_register_encap_content_info_type(name, oid, type): #pylint: disable=redefined-builtin
     cms_register_content_type(name, oid)
     cms.EncapsulatedContentInfo._oid_specs[name] = type #pylint: disable=protected-access
+
+class SignerInfoError(Exception):
+    pass
+
+class SignerInfo(cms.SignerInfo):
+    _signed_digiest = None
+    _content_type = None
+    _signing_time = None
+
+    _id = None
+    _str_rpr = None
+
+    def __str__(self):
+        if self._str_rpr is None:
+            id = self.id
+            if isinstance(id, cms.IssuerAndSerialNumber):
+                self._str_rpr = "issuer='{}', serial={}" \
+                    .format(id['issuer'].human_friendly, hex(id['serial_number'].native).replace('0x', ''))
+            elif self.version == 'v3':
+                self._str_rpr = self.sid.native.hex()
+            else:
+                self._str_rpr = self.sid.native
+        return self._str_rpr
+
+    @property
+    def id(self) -> Optional[Union[cms.IssuerAndSerialNumber, bytes]]:
+        """
+        Returns signer certificate identifer in form of 'issuer and serial number'
+        or certificate subject key identifier.
+        :return: Signer certificate identifer or None if `version` is not v1 or v3
+        """
+        if self._id is None:
+            if self.version.native == 'v1': # IssuerAndSerialNumber
+                self._id = self.sid.chosen
+            elif self.version.native == 'v3': # keyid
+                self._id =  self.sid.native
+        return self._id
+
+    @property
+    def sid(self) -> cms.SignerIdentifier:
+        """Returns SignerIdentifier object"""
+        return self['sid']
+
+    @property
+    def version(self) -> cms.CMSVersion:
+        return self['version']
+
+    @property
+    def signingTime(self) -> Optional[datetime]:
+        """
+        Returns signing date and time from signed attributes.
+        :return: datetime object or None if signing time attribute is not present
+        """
+        if self._signing_time is None:
+            for a in (self.signedAttributes or []):
+                if a['type'].native == 'signing_time':
+                    self._signing_time = a['values'][0].native
+        return self._signing_time
+
+    @property
+    def signedDigest(self) -> Optional[bytes]:
+        """
+        Returns digest of content from signed attributes.
+        :return: content digest or None if content digest is not present.
+        """
+        if self._signed_digiest is None:
+            for a in (self.signedAttributes or []):
+                if a['type'].native == 'message_digest':
+                    self._signed_digiest = a['values'][0].native
+        return self._signed_digiest
+
+    @property
+    def contentType(self):
+        """
+        Returns from signed attributes the type of the content of which digest is returned by `signedDigest`.
+        :return: content type or None if content type is not present.
+        """
+        if self._content_type is None:
+            for a in (self.signedAttributes or []):
+                if a['type'].native == 'content_type':
+                    self._content_type = a['values'][0]
+        return self._content_type
+
+    @property
+    def contentHasher(self) -> hashes.Hash:
+        ''' Returns hash object of digest algorithm for hashing content'''
+        hash_algo = self['digest_algorithm']['algorithm'].native
+        h = algo_utils.get_hash_algo_by_name(hash_algo)
+        return hashes.Hash(h, backend=default_backend())
+
+    @property
+    def signature(self) -> bytes:
+        return self['signature'].native
+
+    @property
+    def signedAttributes(self) -> Optional[cms.CMSAttributes]:
+        return self['signed_attrs'] if 'signed_attrs' in self else None
+
+    @property
+    def signatureAlgorithm(self) -> algos.SignedDigestAlgorithm:
+        ''' Returns signature algoritem '''
+        hash_algo = self['digest_algorithm']['algorithm'].native
+        sig_algo  = self['signature_algorithm']
+        return algo_utils.update_sig_algo_if_no_hash_algo(sig_algo, hash_algo)
+
+    def verifySignedAttributes(self, signerCert: x509.Certificate ) -> None:
+        """
+        Verifies signature made over `signed attributes`.
+        :param signerCert: The certificate which signed the `signed attributes`.
+        :raises SignerInfoError: If this doesn't contain `signed attributes` or
+                                 if the signing time is not within signerCert validity or
+                                 if signature verification fails.
+        """
+        signedAttrs = self.signedAttributes
+        if signedAttrs is None:
+            raise SignerInfoError("Missing field 'signed_attrs' in signer infos")
+
+        if self.signingTime is not None and not signerCert.isValidOn(self.signingTime):
+            raise SignerInfoError("Invalid signing time")
+
+        # Make sure sa is asn1 SET type (DER tag 0x31)
+        signedAttrs.tag    = 17
+        signedAttrs.method = 1
+        signedAttrs.class_ = 0
+
+        signature = self.signature
+        sig_algo  = self.signatureAlgorithm
+        if not cert_utils.verify_sig(signerCert, signedAttrs.dump(force=True), signature, sig_algo):
+            raise SignerInfoError("Signature verification failed")
+
+
+class SignerInfos(cms.SignerInfos):
+    _child_spec = SignerInfo
 
 
 class MrtdSignedDataError(Exception):
@@ -31,15 +164,16 @@ class MrtdSignedData(cms.SignedData):
         pass
 
     _fields = [
-        *cms.SignedData._fields[0:3],
+        *cms.SignedData._fields[0:3], # CMSVersion, digest_algorithms, encap_content_info
         ('certificates', CertificateSetOf, {'implicit': 0, 'optional': True}),
-        *cms.SignedData._fields[4:]
+        cms.SignedData._fields[4], # crls
+        ('signer_infos', SignerInfos)
     ]
 
     CertList = Union[List[_certificate_spec], CertificateSetOf]
 
     def __init__(self, value=None, default=None, **kwargs):
-        self.CertificateSetOf._child_spec  = self._certificate_spec #pylint: disable=protected-access
+        self.CertificateSetOf._child_spec = self._certificate_spec #pylint: disable=protected-access
         super().__init__(value, default, **kwargs)
 
     @property
@@ -60,13 +194,28 @@ class MrtdSignedData(cms.SignedData):
         return self['digest_algorithms']
 
     @property
-    def signerInfos(self) -> cms.SignerInfos:
+    def signers(self) -> SignerInfos:
         ''' Returns SignerInfos object. '''
         return self['signer_infos']
 
     @property
     def version(self) -> cms.CMSVersion:
         return self['version']
+
+    def getCertificate(self, si: SignerInfo) -> Optional[_certificate_spec]:
+        """
+        Returns Certificate from `self.certificates` which signed `si`.
+        :param si: The signer info object for which to get the certificate.
+        :return: _certificate_spec typed object if certificate is found, otherwise None
+        :raises: MrtdSignedDataError if `si` version is not v1 or v3.
+        """
+        sid = si.id
+        if isinstance(sid, cms.IssuerAndSerialNumber):
+            return self.getCertificateBySNI(sid)
+        if isinstance(sid, bytes):
+            keyid = si.sid.native
+            return self.getCertificateByKeyId(keyid)
+        raise MrtdSignedDataError("Invalid SignerInfo version {}".format(si.version))
 
     def getCertificateBySNI(self, sni: cms.IssuerAndSerialNumber) -> _certificate_spec:
         ''' Returns signer certificate identified by serial number and issuer '''
@@ -76,91 +225,37 @@ class MrtdSignedData(cms.SignedData):
         ''' Returns signer certificate identified by subject key identifier '''
         return self.__class__._get_signer_cert_by_keyid(self.certificates, keyId) #pylint: disable=protected-access
 
-    def getHasherBySidx(self, sidx) -> hashes.Hash:
-        ''' Returns hashes.Hash object specified in SignerInfo returned from SignerInfos list by its index. '''
-
-        si = self.signerInfos[sidx]
-        hash_algo = si['digest_algorithm']['algorithm'].native
-        h = algo_utils.get_hash_algo_by_name(hash_algo)
-        return hashes.Hash(h, backend=default_backend())
-
-    def getSignatureBySidx(self, sidx) -> bytes:
-        si = self.signerInfos[sidx]
-        return si['signature'].native
-
-    def getSignedAttributesBySidx(self, sidx) -> cms.CMSAttributes:
-        si = self.signerInfos[sidx]
-        return si['signed_attrs']
-
-    def getSigAlgoBySidx(self, sidx) -> algos.SignedDigestAlgorithm:
-        ''' Returns SignedDigestAlgorithm specified in SignerInfo returned from SignerInfos list by its index. '''
-
-        si = self.signerInfos[sidx]
-        hash_algo = si['digest_algorithm']['algorithm'].native
-        sig_algo  = si['signature_algorithm']
-        return algo_utils.update_sig_algo_if_no_hash_algo(sig_algo, hash_algo)
-
-    def verify(self, certificateList: Optional[CertList] = []) -> None: #pylint: disable=dangerous-default-value
+    def verify(self, si: SignerInfo, issuerCert: x509.Certificate) -> None:
         '''
-        Verifies every SignerInfo object and the digital signature over content.
-        On failure MrtdSignedDataError exception is risen.
-        :param certificateList: (Optional) List of signing certificates
+        Verifies the `issuerCert` signed this object.
+        In essence, it verifies that signed hash from `si` object matches with the hash of `content` and
+        that signed attributes of `si` object which include signed hash were signed by `issuerCert`.
+
+        :param si: SignerInfo object of `issuerCert`.
+        :param issuerCert: Signing certificate which signed `si`.
+        :raises MrtdSignedDataError: When verifying `si` fails or when signed hash doesn't match with the hash of `content`.
         '''
+        assert isinstance(si, SignerInfo)
 
-        for sidx, si in enumerate(self.signerInfos):
-            if si['version'].native == 'v1':
-                sni = si['sid'].chosen
-                c = self.getCertificateBySNI(sni)
-                if c is None:
-                    c = self.__class__._get_signer_cert_by_sni(certificateList, sni) #pylint: disable=protected-access
-            elif si['version'].native == 'v3':
-                keyid = si['sid'].native
-                c = self.getCertificateByKeyId(keyid)
-                if c is None:
-                    c = self.__class__._get_signer_cert_by_keyid(certificateList, keyid) #pylint: disable=protected-access
-            else:
-                raise MrtdSignedDataError("Invalid SignerInfo version at sidx: {}".format(sidx))
+        # 1.) Check signed content type is the same as this content type
+        if si.contentType != self.contentType:
+            raise MrtdSignedDataError("Signed content type doesn't match the actual content type")
 
-            if c is None:
-                raise MrtdSignedDataError("Signer Certificate not found")
+        # 2.) Check si contains signed content hash
+        if si.signedDigest is None:
+            raise MrtdSignedDataError("Missing signed attribute 'message_digest'")
 
-            if 'signed_attrs' not in si:
-                raise MrtdSignedDataError("Missing field 'signed_attrs' in signer infos")
-            sa = si['signed_attrs']
+        # 3.) Verify signed hash matches with content hash
+        h = si.contentHasher
+        h.update(self.content.dump())
+        if h.finalize() != si.signedDigest:
+            raise MrtdSignedDataError("Content digest doesn't match signed digest")
 
-            # Verify content
-            md = None
-            sig_time = None
-            for a in sa:
-                if a['type'].native == 'message_digest':
-                    md = a['values'][0].native
-                elif a['type'].native == 'signing_time':
-                    sig_time = a['values'][0].native
-                elif a['type'].native == 'content_type':
-                    ct = a['values'][0]
-                    if ct != self.contentType:
-                        raise MrtdSignedDataError("signed content type doesn't match actual content type")
-
-            if md is None:
-                raise MrtdSignedDataError("Missing 'message_digest' signed attribute")
-
-            if sig_time is not None and  not c.isValidOn(sig_time):
-                raise MrtdSignedDataError("Invalid signing time")
-
-            h = self.getHasherBySidx(sidx)
-            h.update(self.content.dump())
-            if h.finalize() != md:
-                raise MrtdSignedDataError("Content digest doesn't match signed digest")
-
-            # Make sure sa is asn1 SET type (DER tag 0x31)
-            sa.tag    = 17
-            sa.method = 1
-            sa.class_ = 0
-
-            signature = si['signature'].native
-            sig_algo  = self.getSigAlgoBySidx(sidx)
-            if not cert_utils.verify_sig(c, sa.dump(force=True), signature, sig_algo):
-                raise MrtdSignedDataError("Signature verification failed")
+        # 4.) Verify signature over signed attributes, which include signed content digest
+        try:
+            si.verifySignedAttributes(signerCert=issuerCert)
+        except Exception as e:
+            raise MrtdSignedDataError(e) from e
 
     @staticmethod
     def _get_signer_cert_by_sni(cert_list: CertList, sni: cms.IssuerAndSerialNumber):
