@@ -41,9 +41,9 @@ def test_sod(datafiles):
 
     # LDS SecurityObject test
     assert sod.ldsSecurityObject.version.native                            == 'v0'
-    assert sod.ldsSecurityObject.ldsVersion.native                         == None
+    assert sod.ldsSecurityObject.ldsVersion.native                         is None
     assert sod.ldsSecurityObject.dgHashAlgo['algorithm'].native            == 'sha256'
-    assert sod.ldsSecurityObject.dgHashAlgo['parameters'].native           == None
+    assert sod.ldsSecurityObject.dgHashAlgo['parameters'].native           is None
 
     assert len(sod.ldsSecurityObject.dgHashes)                             == 5
     assert sod.ldsSecurityObject.dgHashes.native[0]['dataGroupNumber']     == 'EF.DG1'
@@ -74,7 +74,7 @@ def test_sod(datafiles):
     assert sod.ldsSecurityObject.dgHashes.find(DataGroupNumber(3)).number  == DataGroupNumber(3)
     assert sod.ldsSecurityObject.dgHashes.find(DataGroupNumber(3)).hash    == bytes.fromhex('403E4D17C26EBC832411898161D8FD5D99C58EE865CB3759B529AA782C7EDE00')
     assert sod.ldsSecurityObject.find(DataGroupNumber(3)).number           == DataGroupNumber(3)
-    assert sod.ldsSecurityObject.find(DataGroupNumber(3)).hash            == bytes.fromhex('403E4D17C26EBC832411898161D8FD5D99C58EE865CB3759B529AA782C7EDE00')
+    assert sod.ldsSecurityObject.find(DataGroupNumber(3)).hash             == bytes.fromhex('403E4D17C26EBC832411898161D8FD5D99C58EE865CB3759B529AA782C7EDE00')
 
     assert sod.ldsSecurityObject.dgHashes.native[3]['dataGroupNumber']     == 'EF.DG14'
     assert sod.ldsSecurityObject.dgHashes.children[3].number               == DataGroupNumber(14)
@@ -146,7 +146,7 @@ def test_sod(datafiles):
     }
 
     assert sod.signers[0].signature                == bytes.fromhex('761106E9FBD2ED1B2F75027DAF13975A4C7ADFC54D675D2DD2BBA762BC073D9288AF4B1B87BA7987D53FA1D321D1943F58573F4913424E2BCDD080C2D8927A985BE2BDCAF6B8FE21EC99D8227F052ED118B7EAE6029F57889CA723912076916355068EBBCF46F19C3FBB49DCF1E9F3B10DF11E270FAC11BC6D1E3C5ADF68E0E46381A45F737E91EE9F889DB6D418AA2C6C3213C47FBC2787F0134384B343CC921A9A03878EBA79BA00901115495942C3E7B0E4DA09E0916C172228AD28D9DBEC915F32E58D7431480443030C2C3D1DEF840223FED41A92C5B30AA2CE9ED346CBB8BB172A2EFF73E0B8CFEC89071A07DC62627421F808DA541A58A1A572E7583F')
-    assert sod.signers[0].native['unsigned_attrs'] == None
+    assert sod.signers[0].native['unsigned_attrs'] is None
 
     # Check signers
     assert len(sod.signers) == 1
@@ -162,14 +162,14 @@ def test_sod(datafiles):
     assert sod.signers[0].sid.native['issuer']        == sod.dscCertificates[0].issuer.native
     assert sod.signers[0].sid.native['serial_number'] == 1387230198055
     assert sod.signers[0].sid.native['serial_number'] == sod.dscCertificates[0].serial_number
-    assert sod.signers[0].signingTime                 == None
+    assert sod.signers[0].signingTime                 is None
     assert sod.signers[0].signature                   == bytes.fromhex('761106E9FBD2ED1B2F75027DAF13975A4C7ADFC54D675D2DD2BBA762BC073D9288AF4B1B87BA7987D53FA1D321D1943F58573F4913424E2BCDD080C2D8927A985BE2BDCAF6B8FE21EC99D8227F052ED118B7EAE6029F57889CA723912076916355068EBBCF46F19C3FBB49DCF1E9F3B10DF11E270FAC11BC6D1E3C5ADF68E0E46381A45F737E91EE9F889DB6D418AA2C6C3213C47FBC2787F0134384B343CC921A9A03878EBA79BA00901115495942C3E7B0E4DA09E0916C172228AD28D9DBEC915F32E58D7431480443030C2C3D1DEF840223FED41A92C5B30AA2CE9ED346CBB8BB172A2EFF73E0B8CFEC89071A07DC62627421F808DA541A58A1A572E7583F')
     assert sod.signers[0].signedAttributes[0].native  == { 'type' : 'content_type', 'values' : ['ldsSecurityObject'] }
     assert sod.signers[0].signedAttributes[1].native  == {
         'type' : 'message_digest',
         'values' : [bytes.fromhex('B46A0D05E280F398EFEEEBFF67E78C736ADD15E75670B1AD4C6C534E8187B9D6')]
     }
-    assert sod.signers[0]['unsigned_attrs'].native    == None
+    assert sod.signers[0]['unsigned_attrs'].native    is None
     assert sod.signers[0].contentType                 == sod.signedData.contentType
     assert sod.signers[0].signedDigest                == bytes.fromhex('B46A0D05E280F398EFEEEBFF67E78C736ADD15E75670B1AD4C6C534E8187B9D6')
     assert sod.signers[0].signatureAlgorithm.native   == {
@@ -212,9 +212,9 @@ def test_sod(datafiles):
 
     # LDS SecurityObject test
     assert sod.ldsSecurityObject.version.native                            == 'v0'
-    assert sod.ldsSecurityObject.ldsVersion.native                         == None
+    assert sod.ldsSecurityObject.ldsVersion.native                         is None
     assert sod.ldsSecurityObject.dgHashAlgo['algorithm'].native            == 'sha256'
-    assert sod.ldsSecurityObject.dgHashAlgo['parameters'].native           == None
+    assert sod.ldsSecurityObject.dgHashAlgo['parameters'].native           is None
 
     assert len(sod.ldsSecurityObject.dgHashes)                             == 6
     assert sod.ldsSecurityObject.dgHashes.native[0]['dataGroupNumber']     == 'EF.DG1'
@@ -331,7 +331,7 @@ def test_sod(datafiles):
     }
 
     assert sod.content.native['content']['signer_infos'][0]['signature'] == bytes.fromhex('599622056634871C86D5161CCA6AF851F14148E0E7EB79B1186DD6BEDF5BD0343EDB6C49B664E9FB459E742CA83358CE83E6B225A0CBFA7C3E9C6AF6D5BC2F4040DD47BF24CACB06FBDD933EEFAD360542656E1F65E0010B8EAE4DA084FC7B78ECB0CED647580BD1E8E2F8660252721E6DC8BD83A8EBE27F780FDBCBEA49D24C6A8A596BA4F4673A04409F2C1EA1CBC6802C9748DD5B2DF042391BA87650447C7E3BAD05553ACDEB96972E3907F425571D767F82219E02BB8839E7FEC9CFE07DCB88B5831A511383DADF5C7C0CB1CE1BD6C2B8B02C2C20DB27402DD3B0CE171993C417D065DD9A0B278E641CF51BABBCCA1128A400ED4AB7C0FD531E4D1E475C')
-    assert sod.content.native['content']['signer_infos'][0]['unsigned_attrs'] == None
+    assert sod.content.native['content']['signer_infos'][0]['unsigned_attrs'] is None
 
     # Check signers
     assert len(sod.signers) == 1
@@ -347,14 +347,14 @@ def test_sod(datafiles):
     assert sod.signers[0].sid.native['issuer']        == sod.dscCertificates[0].issuer.native
     assert sod.signers[0].sid.native['serial_number'] == 1307891936062
     assert sod.signers[0].sid.native['serial_number'] == sod.dscCertificates[0].serial_number
-    assert sod.signers[0].signingTime                 == None
+    assert sod.signers[0].signingTime                 is None
     assert sod.signers[0].signature                   == bytes.fromhex('599622056634871c86d5161cca6af851f14148e0e7eb79b1186dd6bedf5bd0343edb6c49b664e9fb459e742ca83358ce83e6b225a0cbfa7c3e9c6af6d5bc2f4040dd47bf24cacb06fbdd933eefad360542656e1f65e0010b8eae4da084fc7b78ecb0ced647580bd1e8e2f8660252721e6dc8bd83a8ebe27f780fdbcbea49d24c6a8a596ba4f4673a04409f2c1ea1cbc6802c9748dd5b2df042391ba87650447c7e3bad05553acdeb96972e3907f425571d767f82219e02bb8839e7fec9cfe07dcb88b5831a511383dadf5c7c0cb1ce1bd6c2b8b02c2c20db27402dd3b0ce171993c417d065dd9a0b278e641cf51babbcca1128a400ed4ab7c0fd531e4d1e475c')
     assert sod.signers[0].signedAttributes[0].native  == { 'type' : 'content_type', 'values' : ['ldsSecurityObject'] }
     assert sod.signers[0].signedAttributes[1].native  == {
         'type' : 'message_digest',
         'values' : [bytes.fromhex('b07b3583840a50f05e0b0ac5c8310629314b377d2f843fc82110a3b072be5227')]
     }
-    assert sod.signers[0]['unsigned_attrs'].native    == None
+    assert sod.signers[0]['unsigned_attrs'].native    is None
     assert sod.signers[0].contentType                 == sod.signedData.contentType
     assert sod.signers[0].signedDigest                == bytes.fromhex('b07b3583840a50f05e0b0ac5c8310629314b377d2f843fc82110a3b072be5227')
     assert sod.signers[0].signatureAlgorithm.native   == {
@@ -443,4 +443,3 @@ def test_fuzz_sod():
     sod = ef.SOD.load(tv_sod)
     tv_dg15 = ef.DG15.load(bytes.fromhex('6F81A230819F300D06092A864886F70D010101050003818D003081890281810095BDA8143635678427038D225E6F398B327F8AF02647B65C36E9FA8F4E7F8156364A231326F1EC1B9641B78822EC3014656D375C5F60641717F40F40B699DE3CCCB054550DD6DF2640022B9352701F2AB757E9A20FA605D309B6DDD7201F23CFDACC9EE299F187E9E71B650483DC4F6BC109F8FE8A2C2854C784057EE0E6F7670203010002'))
     assert sod.ldsSecurityObject.contains(tv_dg15) == False
-
