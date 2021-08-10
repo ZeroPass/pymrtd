@@ -32,10 +32,10 @@ class SignerInfo(cms.SignerInfo):
 
     def __str__(self):
         if self._str_rpr is None:
-            id = self.id
-            if isinstance(id, cms.IssuerAndSerialNumber):
+            sid = self.id
+            if isinstance(sid, cms.IssuerAndSerialNumber):
                 self._str_rpr = "issuer='{}', serial={}" \
-                    .format(id['issuer'].human_friendly, hex(id['serial_number'].native).replace('0x', ''))
+                    .format(sid['issuer'].human_friendly, hex(sid['serial_number'].native).replace('0x', ''))
             elif self.version == 'v3':
                 self._str_rpr = self.sid.native.hex()
             else:
