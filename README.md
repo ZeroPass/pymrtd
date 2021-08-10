@@ -51,11 +51,11 @@ Example of validating MRTD trustchain:
 ```python
 # 1. Parse SOD and get signing certificates (DSC, CSCA)
 sod = SOD.load(...)
-if len(sod.dsCertificates) == 0: # SOD is not required to store it's signer DSC certificate.
+if len(sod.dscCertificates) == 0: # SOD is not required to store it's signer DSC certificate.
   raise Exception("Can't verify SOD, no DSC found")
 
-dsc  = sod.dsCertificates[0] # SOD can store more than 1 DSC certificate by definition
-csca = fetchCSCAofDSC(sod.dsCertificates[0])
+dsc  = sod.dscCertificates[0] # SOD can store more than 1 DSC certificate by definition
+csca = fetchCscaForDsc(sod.dscCertificates[0])
 if csca is None:
   raise Exception("Can't verify DSC, no CSCA found")
 
@@ -67,10 +67,12 @@ if not dsc.isValidOn(utils.time_now()):
   raise Exception("DSC has expired")
 
 try:
-  # Note: certificate conformance check (nc_verification) is not done by default
-  #       because not all countries follow the standard strictly
-  dsc.verify(issuing_cert=csca, nc_verification=True/False)
-  sod.verify() # optionally, a list of DSC certificates can be provided
+  for si in sod.signers:
+    # Note: certificate conformance check (checkConformance) is not done by default
+    #       because not all countries follow the standard strictly
+    dsc.verify(issuing_cert=csca, checkConformance=True/False)
+    sod.verify(si=si, issuerCert=dsc)
+    return success
 except:
   raise Exception("MRTD turstchain verification failed")
 ```
