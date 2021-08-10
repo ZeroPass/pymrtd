@@ -1,5 +1,6 @@
 from .base import (
     ElementaryFile,
+    ElementaryFileError,
     LDSVersionInfo
 )
 
@@ -16,7 +17,8 @@ from .mrz import (
 )
 
 from .sod import (
-    SOD
+    SOD,
+    SODError
 )
 
 __all__ = [
@@ -26,6 +28,9 @@ __all__ = [
     "DG14",
     "DG15",
     "ElementaryFile",
+    "ElementaryFileError",
+    "LDSVersionInfo",
     "MachineReadableZone",
-    "SOD"
+    "SOD",
+    "SODError"
 ]
