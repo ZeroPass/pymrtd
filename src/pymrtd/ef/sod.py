@@ -1,6 +1,5 @@
 import asn1crypto.core as asn1
 from asn1crypto.algos import DigestAlgorithm
-from asn1crypto.cms import SignerIdentifier
 from asn1crypto.util import int_from_bytes
 
 from cryptography.hazmat.backends import default_backend
