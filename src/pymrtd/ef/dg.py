@@ -167,7 +167,7 @@ class DG1(DataGroup):
     _content_spec = MachineReadableZone
 
     @property
-    def mrz(self):
+    def mrz(self) -> MachineReadableZone:
         return self.content
 
     @property
