@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 import os
-import platform
 import sys
 
 from setuptools import setup, find_packages
-__version__      = 0.6
+__version__      = '0.6.1'
 __package_name__ = 'pymrtd'
 __summery__ = 'Python implementation of ICAO 9303 MRTD standard aka Biometric Passport'
 
@@ -28,7 +27,7 @@ setup(
         'cryptography>=3.4.7'
     ],
     extras_require={
-        'test': [
+        'tests': [
             'pytest>=6.2.4',
             'pytest-depends>=1.0.1',
             'pytest-datafiles>=2.0.0'
