@@ -45,19 +45,19 @@ class MachineReadableZone(asn1.OctetString):
         return self['country']
 
     @property
-    def date_of_birth(self) -> Optional[date]: # Could be None if date is not known
+    def dateOfBirth(self) -> Optional[date]: # Could be None if date is not known
         return self['date_of_birth']
 
     @property
-    def date_of_expiry(self) -> date:
+    def dateOfExpiry(self) -> date:
         return self['date_of_expiry']
 
     @property
-    def document_code(self) -> str:
+    def documentCode(self) -> str:
         return self['document_code']
 
     @property
-    def document_number(self) -> str:
+    def documentNumber(self) -> str:
         return self['document_number']
 
     @property
@@ -82,7 +82,7 @@ class MachineReadableZone(asn1.OctetString):
         return self._parsed
 
     @property
-    def optional_data(self) -> str:
+    def additionalData(self) -> str:
         if self.type == 'td1':
             return self['optional_data_1'] \
                 if len(self['optional_data_1']) \
@@ -98,21 +98,21 @@ class MachineReadableZone(asn1.OctetString):
 
     @property
     def type(self) -> str:
-        return self._type #pylint: disable=maybe-no-member
+        return self._type
 
-    def to_json(self) -> dict:
+    def toJson(self) -> dict:
         return {
             'type'            : self.type,
-            'doc_code'        : self.document_code,
-            'doc_number'      : self.document_number,
-            'date_of_expiry'  : self.date_of_expiry,
+            'doc_code'        : self.documentCode,
+            'doc_number'      : self.documentNumber,
+            'date_of_expiry'  : self.dateOfExpiry,
             'surname'         : self.surname,
             'name'            : self.name,
-            'date_of_birth'   : self.date_of_birth,
+            'date_of_birth'   : self.dateOfBirth,
             'gender'          : self.gender,
             'country'         : self.country,
             'nationality'     : self.nationality,
-            'additional_data' : self.optional_data
+            'additional_data' : self.additionalData
         }
 
     def parse(self):

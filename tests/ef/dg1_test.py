@@ -21,16 +21,16 @@ def test_dg1():
     assert dg1.tag                    == 1
     assert dg1.number                 == DataGroupNumber(1)
     assert dg1.mrz.type               == 'td1'
-    assert dg1.mrz.document_code      == 'I'
-    assert dg1.mrz.document_number    == 'XI85935F8'
+    assert dg1.mrz.documentCode       == 'I'
+    assert dg1.mrz.documentNumber     == 'XI85935F8'
     assert dg1.mrz.country            == 'NLD'
     assert dg1.mrz.nationality        == 'NLD'
     assert dg1.mrz.name               == 'MARIANNE LOUISE'
     assert dg1.mrz.surname            == 'VAN DER STEEN'
     assert dg1.mrz.gender             == 'F'
-    assert dg1.mrz.date_of_birth      == date( 1972, 8, 14 )
-    assert dg1.mrz.date_of_expiry     == date( 2011, 8, 26 )
-    assert dg1.mrz.optional_data      == '999999990'
+    assert dg1.mrz.dateOfBirth        == date( 1972, 8, 14 )
+    assert dg1.mrz.dateOfExpiry       == date( 2011, 8, 26 )
+    assert dg1.mrz.additionalData     == '999999990'
     assert dg1.mrz['optional_data_2'] == ''
 
     #  Test vectors from Appendix A to the part 10 of ICAO 9393 p10 doc
@@ -49,16 +49,16 @@ def test_dg1():
     assert dg1.tag                    == 1
     assert dg1.number                 == DataGroupNumber(1)
     assert dg1.mrz.type               == 'td2'
-    assert dg1.mrz.document_code      == 'I'
-    assert dg1.mrz.document_number    == '123456789012'
+    assert dg1.mrz.documentCode       == 'I'
+    assert dg1.mrz.documentNumber     == '123456789012'
     assert dg1.mrz.country            == 'ATA'
     assert dg1.mrz.nationality        == 'HMD'
     assert dg1.mrz.name               == 'JOHN T'
     assert dg1.mrz.surname            == 'SMITH'
     assert dg1.mrz.gender             == 'M'
-    assert dg1.mrz.date_of_birth      == date( 1974, 6, 22 )
-    assert dg1.mrz.date_of_expiry     == date( 2010, 12, 31 )
-    assert dg1.mrz.optional_data      == ''
+    assert dg1.mrz.dateOfBirth        == date( 1974, 6, 22 )
+    assert dg1.mrz.dateOfExpiry       == date( 2010, 12, 31 )
+    assert dg1.mrz.additionalData     == ''
 
     # MRZ tv from ICAO 9303 part 4 Appendix B To Part 4 and prefixed with '615B' to simulate EF.DG1 file
     tv_dg1 = bytes.fromhex('615B5f1f58503c55544f4552494b53534f4e3c3c414e4e413c4d415249413c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c4c38393839303243333655544f3734303831323246313230343135395a45313834323236423c3c3c3c3c3130')
@@ -68,17 +68,17 @@ def test_dg1():
     assert dg1.tag                       == 1
     assert dg1.number                    == DataGroupNumber(1)
     assert dg1.mrz.type                  == 'td3'
-    assert dg1.mrz.document_code         == 'P'
+    assert dg1.mrz.documentCode          == 'P'
     assert dg1.mrz.country               == 'UTO'
-    assert dg1.mrz.document_number       == 'L898902C3'
+    assert dg1.mrz.documentNumber        == 'L898902C3'
     assert dg1.mrz['document_number_cd'] == '6'
     assert dg1.mrz['optional_data']      == 'ZE184226B'
-    assert dg1.mrz.optional_data         == 'ZE184226B'
+    assert dg1.mrz.additionalData        == 'ZE184226B'
     assert dg1.mrz['optional_data_cd']   == 1
-    assert dg1.mrz.date_of_birth         == date( 1974, 8, 12 )
+    assert dg1.mrz.dateOfBirth           == date( 1974, 8, 12 )
     assert dg1.mrz['date_of_birth_cd']   == 2
     assert dg1.mrz.gender                == 'F'
-    assert dg1.mrz.date_of_expiry        == date( 2012, 4, 15 )
+    assert dg1.mrz.dateOfExpiry          == date( 2012, 4, 15 )
     assert dg1.mrz['date_of_expiry_cd']  == 9
     assert dg1.mrz.nationality           == 'UTO'
     assert dg1.mrz['composite_cd']       == 0
