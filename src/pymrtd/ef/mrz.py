@@ -17,14 +17,16 @@ class DocumentType(Enum):
                    #       However, the first character of the document code shall be P"
 
 class MachineReadableZone(asn1.OctetString):
-    class_ = 1
-    tag    = 31
+    class_  = 1
+    tag     = 31
     _parsed = None
+    _type   = None
 
     @classmethod
     def load(cls, encoded_data: bytes, strict=False, **kwargs):
-        v = super().load(encoded_data, strict, **kwargs)
+        v:MachineReadableZone = super().load(encoded_data, strict, **kwargs)
         clen = len(v.contents)
+        # pylint: disable=protected-access
         if clen == 90:
             v._type = 'td1'
         elif clen == 72:
@@ -97,6 +99,21 @@ class MachineReadableZone(asn1.OctetString):
     @property
     def type(self) -> str:
         return self._type #pylint: disable=maybe-no-member
+
+    def to_json(self) -> dict:
+        return {
+            'type'            : self.type,
+            'doc_code'        : self.document_code,
+            'doc_number'      : self.document_number,
+            'date_of_expiry'  : self.date_of_expiry,
+            'surname'         : self.surname,
+            'name'            : self.name,
+            'date_of_birth'   : self.date_of_birth,
+            'gender'          : self.gender,
+            'country'         : self.country,
+            'nationality'     : self.nationality,
+            'additional_data' : self.optional_data
+        }
 
     def parse(self):
         self._parsed = {}
