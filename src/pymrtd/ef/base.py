@@ -31,7 +31,7 @@ class ElementaryFile(asn1.Asn1Value):
         Returns string representation of self i.e. EF(fp=XXXXXXXXXXXXXXXX)
         """
         if self._str_rep is None:
-            self._str_rep = "{}(fp={})".format("EF", self.fingerprint)
+            self._str_rep = f'EF(fp={self.fingerprint})'
         return self._str_rep
 
     @classmethod
@@ -64,9 +64,7 @@ class ElementaryFile(asn1.Asn1Value):
             ))
 
         if cls.tag is not None and value.tag != cls.tag:
-            raise ElementaryFileError("Invalid elementary file tag, expected tag '{}' got '{}'"
-                .format(cls.tag,value.tag)
-            )
+            raise ElementaryFileError(f"Invalid elementary file tag, expected tag '{cls.tag}' got '{value.tag}'")
 
         # Force parsing of content. This is done in order for any invalid content to rise an exception
         value.content #pylint: disable=pointless-statement
@@ -118,11 +116,7 @@ class ElementaryFile(asn1.Asn1Value):
 
         if self._content_spec is not None:
             if not issubclass(self._content_spec, asn1.Asn1Value):
-                raise ValueError(
-                    '''
-                    _content_spec must be of a Ans1Value type, not {}
-                    '''.format(repr(self._content_spec))
-                )
+                raise ValueError(f'_content_spec must be of a Ans1Value type, not {self._content_spec!r}')
 
             try:
                 self._content = self._content_spec.load(self.contents, strict=True)
@@ -132,5 +126,5 @@ class ElementaryFile(asn1.Asn1Value):
                 from asn1crypto._types import type_name #pylint: disable=import-outside-toplevel
                 self._content = None
                 args   = e.args[1:]
-                e.args = (e.args[0] + '\n    while parsing {}'.format(type_name(self)),) + args
+                e.args = (e.args[0] + f'\n    while parsing {type_name(self)}',) + args
                 raise

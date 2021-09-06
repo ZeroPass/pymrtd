@@ -107,7 +107,7 @@ class Certificate(x509.Certificate):
 
     def _require_cert_field(self, field: str):
         Certificate._require(field in self,
-            "Missing required certificate field '{}'".format(field)
+            f"Missing required certificate field '{field}'"
         )
 
     def _verify_cert_fields(self):
@@ -117,7 +117,7 @@ class Certificate(x509.Certificate):
 
     def _require_tbs_cert_field(self, field: str):
         Certificate._require(field in self['tbs_certificate'],
-            "Missing required tbs certificate field '{}'".format(field)
+            f"Missing required tbs certificate field '{field}'"
         )
 
     def _verify_tbs_cert_fields(self):
@@ -137,7 +137,7 @@ class Certificate(x509.Certificate):
         )
         cn = self.issuer.native['country_name']
         Certificate._require( len(cn) == 2, # ICAO 9303 part 12 section 7.1.1.1.1
-            'Invalid country name in issuer field: {}'.format(cn)
+            f'Invalid country name in issuer field: {cn}'
         )
 
         Certificate._require('country_name' in self.subject.native, # ICAO 9303 part 12 section 7.1.1.1.1
@@ -145,7 +145,7 @@ class Certificate(x509.Certificate):
         )
         cn = self.subject.native['country_name']
         Certificate._require( len(cn) == 2, # ICAO 9303 part 12 section 7.1.1.1.1
-            'Invalid country name in subject field: {}'.format(cn)
+            f'Invalid country name in subject field: {cn}'
         )
 
     def _require_extension_field(self, field: str):
@@ -154,7 +154,7 @@ class Certificate(x509.Certificate):
             if field in e['extn_id'].native:
                 return
         Certificate._require(False,
-            "Missing required extension field '{}'".format(field)
+            f"Missing required extension field '{field}'"
          )
 
     def _require_extension_value(self, field: str, value):
@@ -164,11 +164,11 @@ class Certificate(x509.Certificate):
                 if e['extn_value'].native == value:
                     return
                 Certificate._require(False,
-                    "Extension value invalid! ext='{}' v='{}', req_v='{}'".format(field, e['extn_value'].native, value)
+                    f"Extension value invalid! ext='{field}' v='{e['extn_value'].native}', req_v='{value}'"
                 )
 
         Certificate._require(False,
-            "Missing required extension field '{}'".format(field)
+            f"Missing required extension field '{field}'"
         )
 
 
@@ -215,7 +215,7 @@ class CscaCertificate(Certificate):
         # the value of PathLenConstraint is 0 for CSCA or 1 for LCSCA.
         if self.max_path_length is not None:
             Certificate._require( 0 <= self.max_path_length <= 1, #Note: Portuguese cross-link CSCA has value 2
-                "Invalid CSCA path length constraint: {}".format(self.max_path_length)
+                f'Invalid CSCA path length constraint: {self.max_path_length}'
             )
 
         super()._require_extension_field('key_usage')

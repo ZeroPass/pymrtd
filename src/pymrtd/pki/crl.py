@@ -92,7 +92,7 @@ class CertificateRevocationList(CertificateList):
         )
         cn = self.issuer.native['country_name']
         CertificateRevocationList._require( len(cn) == 2, # ICAO 9303 part 12 section 7.1.1.1.1
-            "Invalid country name in issuer field: {}".format(cn)
+            f'Invalid country name in issuer field: {cn}'
         )
 
         # Check crl number
@@ -132,10 +132,10 @@ class CertificateRevocationList(CertificateList):
 
     def _require_crl_field(self, field: str):
         CertificateRevocationList._require(field in self,
-            "Missing required certificate field '{}'".format(field)
+            f"Missing required certificate field '{field}'"
         )
 
     def _require_crl_tbs_cert_list_field(self, field: str):
         CertificateRevocationList._require(field in self['tbs_cert_list'],
-            "Missing required certificate field '{}'".format(field)
+            f"Missing required certificate field '{field}'"
         )

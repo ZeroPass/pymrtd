@@ -18,7 +18,7 @@ _STR_TO_HASH_ALGO = {
 def get_hash_algo_by_name(hash_algo: str):
     hash_algo = hash_algo.lower()
     if hash_algo not in _STR_TO_HASH_ALGO:
-        raise ValueError("Invalid hash algorithm '{}'".format(hash_algo))
+        raise ValueError(f"Invalid hash algorithm '{hash_algo}'")
     return _STR_TO_HASH_ALGO[hash_algo]
 
 def update_sig_algo_if_no_hash_algo(sig_algo: SignedDigestAlgorithm, hash_algo: str):

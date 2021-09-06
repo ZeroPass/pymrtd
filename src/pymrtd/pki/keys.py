@@ -53,7 +53,7 @@ class SignatureAlgorithm(algos.SignedDigestAlgorithm):
 
         if algorithm in algo_map:
             return algo_map[algorithm]
-        raise ValueError('Signature algorithm not known for {}'.format(algorithm))
+        raise ValueError(f'Signature algorithm not known for {algorithm}')
 
     @property
     def hashAlgo(self) -> str:
@@ -71,7 +71,7 @@ class SignatureAlgorithm(algos.SignedDigestAlgorithm):
 
         if algorithm in algo_map:
             return algo_map[algorithm]
-        raise ValueError('Hash algorithm not known for {}'.format(algorithm))
+        raise ValueError(f'Hash algorithm not known for {algorithm}')
 
 
 class ECDSA_X962_Signature(asn1.Sequence):
@@ -172,7 +172,7 @@ class PublicKey:
 
                 mgf = sig_algo_params['mask_gen_algorithm']['algorithm'].native
                 if mgf != 'mgf1':
-                    raise ValueError("Invalid mask generation algorithm: {}".format(mgf))
+                    raise ValueError(f'Invalid mask generation algorithm: {mgf}')
 
                 mgf1_hash_algo = sig_algo_params['mask_gen_algorithm']['parameters']['algorithm'].native
                 mgf1_hash_algo = algo_utils.get_hash_algo_by_name(mgf1_hash_algo)

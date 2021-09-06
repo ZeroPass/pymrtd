@@ -3,8 +3,8 @@ from pymrtd import ef
 from datetime import date
 
 def _td_as_der(td) -> bytes:
-    td = "".join("{:02x}".format(ord(c)) for c in td)
-    td = '5F1F{:02x}{}'.format(int(len(td) /2), td)
+    td = "".join(f'{ord(c):02x}' for c in td)
+    td = f'5F1F{int(len(td) /2):02x}{td}'
     return bytes.fromhex(td)
 
 def test_mrz_parse():

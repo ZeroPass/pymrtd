@@ -58,22 +58,22 @@ class CscaMasterList(MlContentInfo):
         ci = cast(cls, super().load(encoded_bytes, strict=strict))
         ctype = ci['content_type'].native
         if ctype != 'signed_data': # ICAO 9303-12-p25
-            raise CscaMasterListError("Invalid master list content type: {}, should be 'signed_data'".format(ctype))
+            raise CscaMasterListError(f"Invalid master list content type: {ctype}, should be 'signed_data'")
 
         #pylint: disable=protected-access
 
         cver = ci.signedData.version.native
         if cver != 'v3': # ICAO 9303-12-p25
-            raise CscaMasterListError("Invalid SignedData version: {}, should be 'v3'".format(cver))
+            raise CscaMasterListError(f"Invalid SignedData version: {cver}, should be 'v3'")
 
         if ci.signedData.contentType.dotted != id_icao_cscaMasterList:
-            raise CscaMasterListError("Invalid encapContentInfo type: {}, should be '{}'".format(ci.signedData.contentType.dotted, id_icao_cscaMasterList))
+            raise CscaMasterListError(f"Invalid encapContentInfo type: {ci.signedData.contentType.dotted}, should be '{id_icao_cscaMasterList}'")
 
         if ci.signedData.content.version != 0: # ICAO 9303-12-p27
-            raise CscaMasterListError("Unsupported encapContentInfo version: {}, should be 0".format(ci.signedData.version))
+            raise CscaMasterListError(f'Unsupported encapContentInfo version: {ci.signedData.version}, should be 0')
 
         if len(ci.signedData.certificates) < 1:
-            raise CscaMasterListError("No master list signer certificate found")
+            raise CscaMasterListError('No master list signer certificate found')
 
         assert isinstance(ci.signedData.certificates[0], MasterListSignerCertificate)
         assert isinstance(ci.signedData.content, CscaList)

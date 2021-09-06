@@ -91,7 +91,7 @@ class SecurityInfo(asn1.Choice):
             if self.name == 'aa_info' or self.name == 'chip_auth_info':
                 if self._parsed['version'].native != 1:
                     from asn1crypto._types import type_name #pylint: disable=import-outside-toplevel
-                    raise ValueError("{} version != 1".format(type_name(self._parsed)))
+                    raise ValueError(f'{type_name(self._parsed)} version != 1')
         return self._parsed
 
 
@@ -154,7 +154,7 @@ class DataGroup(ElementaryFile):
         """
         if self._str_rep is None:
             self._str_rep = super().__str__()\
-                .replace("EF(", "{}(".format(self.number.native), 1)
+                .replace("EF(", f'{self.number.native}(', 1)
         return self._str_rep
 
     @property

@@ -34,8 +34,8 @@ class SignerInfo(cms.SignerInfo):
         if self._str_rpr is None:
             sid = self.id
             if isinstance(sid, cms.IssuerAndSerialNumber):
-                self._str_rpr = "issuer='{}', serial={}" \
-                    .format(sid['issuer'].human_friendly, hex(sid['serial_number'].native).replace('0x', ''))
+                self._str_rpr = \
+                    f"issuer='{sid['issuer'].human_friendly}', serial={hex(sid['serial_number'].native).replace('0x', '')}"
             elif self.version == 'v3':
                 self._str_rpr = self.sid.native.hex()
             else:
@@ -215,7 +215,7 @@ class MrtdSignedData(cms.SignedData):
         if isinstance(sid, bytes):
             keyid = si.sid.native
             return self.getCertificateByKeyId(keyid)
-        raise MrtdSignedDataError("Invalid SignerInfo version {}".format(si.version))
+        raise MrtdSignedDataError(f'Invalid SignerInfo version {si.version}')
 
     def getCertificateBySNI(self, sni: cms.IssuerAndSerialNumber) -> _certificate_spec:
         ''' Returns signer certificate identified by serial number and issuer '''
