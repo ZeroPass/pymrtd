@@ -97,7 +97,7 @@ def test_dg1():
     assert dg1.mrz.documentCode          == 'P'
     assert dg1.mrz.country               == 'UTO'
     assert dg1.mrz.documentNumber        == 'L898902C3'
-    assert dg1.mrz['document_number_cd'] == '6'
+    assert dg1.mrz['document_number_cd'] == 6
     assert dg1.mrz['optional_data']      == 'ZE184226B'
     assert dg1.mrz.additionalData        == 'ZE184226B'
     assert dg1.mrz['optional_data_cd']   == 1

@@ -87,7 +87,7 @@ def test_mrz_parse():
     assert mrz.documentCode             == 'P'
     assert mrz.country                  == 'UTO'
     assert mrz.documentNumber           == 'L898902C3'
-    assert mrz['document_number_cd']    == '6'
+    assert mrz['document_number_cd']    == 6
     assert mrz['optional_data']         == 'ZE184226B'
     assert mrz.additionalData           == 'ZE184226B'
     assert mrz['optional_data_cd']      == 1
@@ -125,7 +125,7 @@ def test_mrz_parse():
     assert mrz.documentCode             == 'P'
     assert mrz.country                  == 'D'
     assert mrz.documentNumber           == 'C11T002JM'
-    assert mrz['document_number_cd']    == '4'
+    assert mrz['document_number_cd']    == 4
     assert mrz['optional_data']         == ''
     assert mrz.additionalData           == ''
     assert mrz['optional_data_cd']      == 0
@@ -148,6 +148,42 @@ def test_mrz_parse():
                                             'name'            : 'ERIKA',
                                             'date_of_birth'   : date( 1996, 8, 12 ),
                                             'gender'          : 'F',
+                                            'country'         : 'D',
+                                            'nationality'     : 'D',
+                                            'additional_data' : ''
+                                           }
+
+    # Custom test vector
+    tv  = _td_as_der("P<D<<SCHMIDT<<FINN<<<<<<<<<<<<<<<<<<<<<<<<<<AA89BXHZ56D<<7503201M2511188<<<<<<<<<<<<<<<8")
+    mrz = ef.MachineReadableZone.load(tv)
+    assert mrz.dump()                   == tv
+    assert mrz.type                     == 'td3'
+    assert mrz.documentCode             == 'P'
+    assert mrz.country                  == 'D'
+    assert mrz.documentNumber           == 'AA89BXHZ5'
+    assert mrz['document_number_cd']    == 6
+    assert mrz['optional_data']         == ''
+    assert mrz.additionalData           == ''
+    assert mrz['optional_data_cd']      == 0
+    assert mrz.dateOfBirth              == date( 1975, 3, 20 )
+    assert mrz['date_of_birth_cd']      == 1
+    assert mrz.gender                   == 'M'
+    assert mrz.dateOfExpiry             == date( 2025, 11, 18 )
+    assert mrz['date_of_expiry_cd']     == 8
+    assert mrz.nationality              == 'D'
+    assert mrz['composite_cd']          == 8
+    assert mrz['name_identifiers']      == ( 'SCHMIDT', 'FINN' )
+    assert mrz.name                     == 'FINN'
+    assert mrz.surname                  == 'SCHMIDT'
+    assert mrz.toJson()                 == {
+                                            'type'            : 'td3',
+                                            'doc_code'        : 'P',
+                                            'doc_number'      : 'AA89BXHZ5',
+                                            'date_of_expiry'  : date( 2025, 11, 18 ),
+                                            'surname'         : 'SCHMIDT',
+                                            'name'            : 'FINN',
+                                            'date_of_birth'   : date( 1975, 3, 20 ),
+                                            'gender'          : 'M',
                                             'country'         : 'D',
                                             'nationality'     : 'D',
                                             'additional_data' : ''

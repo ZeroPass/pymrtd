@@ -133,13 +133,13 @@ class MachineReadableZone(asn1.OctetString):
         self._parsed['document_number_cd'] = self._read_with_filter(14, 1) # document number check digit, could be char '<'
         self._parsed['optional_data_1']    = self._read(15, 15)
         self._parsed['date_of_birth']      = self._read_date_of_birth(30, 6)
-        self._parsed['date_of_birth_cd']   = self._read_int(36, 1) # document dob digit
+        self._parsed['date_of_birth_cd']   = self._read_cd(36) # document dob check digit
         self._parsed['gender']             = self._read(37, 1)
         self._parsed['date_of_expiry']     = self._read_date_of_expiry(38, 6)
-        self._parsed['date_of_expiry_cd']  = self._read_int(44, 1) # document doe digit
+        self._parsed['date_of_expiry_cd']  = self._read_cd(44) # document doe check digit
         self._parsed['nationality']        = self._read(45, 3)
         self._parsed['optional_data_2']    = self._read(48, 11)
-        self._parsed['composite_cd']       = self._read_int(59, 1)
+        self._parsed['composite_cd']       = self._read_cd(59)
         self._parsed['name_identifiers']   = self._read_name_identifiers(60, 30)
         self._parseExtendedDocumentNumber()
 
@@ -151,12 +151,12 @@ class MachineReadableZone(asn1.OctetString):
         self._parsed['document_number_cd'] = self._read_with_filter(45, 1) # document number check digit
         self._parsed['nationality']        = self._read(46, 3)
         self._parsed['date_of_birth']      = self._read_date_of_birth(49, 6)
-        self._parsed['date_of_birth_cd']   = self._read_int(55, 1) # document dob digit
+        self._parsed['date_of_birth_cd']   = self._read_cd(55) # document dob check digit
         self._parsed['gender']             = self._read(56, 1)
         self._parsed['date_of_expiry']     = self._read_date_of_expiry(57, 6)
-        self._parsed['date_of_expiry_cd']  = self._read_int(63, 1) # document doe digit
+        self._parsed['date_of_expiry_cd']  = self._read_cd(63) # document doe check digit
         self._parsed['optional_data']      = self._read(64, 7)
-        self._parsed['composite_cd']       = self._read_int(71, 1)
+        self._parsed['composite_cd']       = self._read_cd(71)
         self._parseExtendedDocumentNumber()
 
     def _parse_td3(self):
@@ -164,16 +164,16 @@ class MachineReadableZone(asn1.OctetString):
         self._parsed['country']            = self._read(2, 3)
         self._parsed['name_identifiers']   = self._read_name_identifiers(5, 39)
         self._parsed['document_number']    = self._read(44, 9)
-        self._parsed['document_number_cd'] = self._read_with_filter(53, 1) # document number check digit
+        self._parsed['document_number_cd'] = self._read_cd(53) # document number check digit
         self._parsed['nationality']        = self._read(54, 3)
         self._parsed['date_of_birth']      = self._read_date_of_birth(57, 6)
-        self._parsed['date_of_birth_cd']   = self._read_int(63, 1) # document dob digit
+        self._parsed['date_of_birth_cd']   = self._read_cd(63) # document dob check digit
         self._parsed['gender']             = self._read(64, 1)
         self._parsed['date_of_expiry']     = self._read_date_of_expiry(65, 6)
-        self._parsed['date_of_expiry_cd']  = self._read_int(71, 1) # document doe digit
+        self._parsed['date_of_expiry_cd']  = self._read_cd(71) # document doe check digit
         self._parsed['optional_data']      = self._read(72, 14)
-        self._parsed['optional_data_cd']   = self._read_int(86, 1)
-        self._parsed['composite_cd']       = self._read_int(87, 1)
+        self._parsed['optional_data_cd']   = self._read_cd(86)
+        self._parsed['composite_cd']       = self._read_cd(87)
 
     def _parseExtendedDocumentNumber(self):
         # doc 9303 p10 page 30
@@ -191,6 +191,12 @@ class MachineReadableZone(asn1.OctetString):
 
     def _read_int(self, idx, len):
         return int(self._read(idx, len))
+
+    def _read_cd(self, idx) -> int:
+        scd = self._read_with_filter(idx, 1)
+        if scd == '<':
+            return 0
+        return int(scd)
 
     def _read_date(self, idx, len):
         date = self._read(idx, len)
