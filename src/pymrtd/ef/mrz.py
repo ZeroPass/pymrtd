@@ -189,20 +189,23 @@ class MachineReadableZone(asn1.OctetString):
     def _read(self, idx, len):
         return self._read_with_filter(idx, len).rstrip('<')
 
-    def _read_int(self, idx, len):
-        return int(self._read(idx, len))
-
     def _read_cd(self, idx) -> int:
         scd = self._read_with_filter(idx, 1)
         if scd == '<':
             return 0
-        return int(scd)
+        try:
+            return int(scd)
+        except:
+            raise ValueError(f"Invalid check digit character '{scd}' in MRZ at position {idx}")
 
     def _read_date(self, idx, len):
-        date = self._read(idx, len)
+        date = self._read_with_filter(idx, len)
         if '<' in date: # In case of unknown date of birth
             return None
-        return datetime.strptime(date, '%y%m%d').date()
+        try:
+            return datetime.strptime(date.rstrip('<'), '%y%m%d').date()
+        except:
+            raise ValueError(f"Invalid date format '{date}' in MRZ at position {idx}")
 
     def _read_date_of_birth(self, idx, len):
         date = self._read_date(idx, len)
@@ -214,7 +217,7 @@ class MachineReadableZone(asn1.OctetString):
     def _read_date_of_expiry(self, idx, len):
         date = self._read_date(idx, len)
         if date is None:
-            raise ValueError('Invalid date of expiry in MRZ data')
+            raise ValueError('Invalid date of expiry in MRZ')
         return date
 
     def _read_name_identifiers(self, idx, size):

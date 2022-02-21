@@ -200,3 +200,26 @@ def test_mrz_parse():
         ef.MachineReadableZone.load(_td_as_der('P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<'))
     with pytest.raises(ValueError, match="Unknown MRZ type"):
         ef.MachineReadableZone.load(_td_as_der('XP<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<L898902C36UTO7408122F1204159ZE184226B<<<<<10'))
+
+    with pytest.raises(ValueError, match="Invalid date format 'xY0812' in MRZ at position 57"):
+        ef.MachineReadableZone.load(_td_as_der('P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<L898902C36UTOxY08122F1204159ZE184226B<<<<<10')).dateOfBirth
+    with pytest.raises(ValueError, match="Invalid date format '74A812' in MRZ at position 57"):
+        ef.MachineReadableZone.load(_td_as_der('P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<L898902C36UTO74A8122F1204159ZE184226B<<<<<10')).dateOfBirth
+    with pytest.raises(ValueError, match="Invalid date format '74081U' in MRZ at position 57"):
+        ef.MachineReadableZone.load(_td_as_der('P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<L898902C36UTO74081U2F1204159ZE184226B<<<<<10')).dateOfBirth
+
+    with pytest.raises(ValueError, match="Invalid date format 'I20415' in MRZ at position 65"):
+        ef.MachineReadableZone.load(_td_as_der('P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<L898902C36UTO7408122FI204159ZE184226B<<<<<10')).dateOfExpiry
+    with pytest.raises(ValueError, match="Invalid date format '120E15' in MRZ at position 65"):
+        ef.MachineReadableZone.load(_td_as_der('P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<L898902C36UTO7408122F120E159ZE184226B<<<<<10')).dateOfExpiry
+    with pytest.raises(ValueError, match="Invalid date format '1204ss' in MRZ at position 65"):
+        ef.MachineReadableZone.load(_td_as_der('P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<L898902C36UTO7408122F1204ss9ZE184226B<<<<<10')).dateOfExpiry
+    with pytest.raises(ValueError, match="Invalid date of expiry in MRZ"):
+        ef.MachineReadableZone.load(_td_as_der('P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<L898902C36UTO7408122F<<<<<<9ZE184226B<<<<<10')).dateOfExpiry
+
+    with pytest.raises(ValueError, match="Invalid check digit character 'x' in MRZ at position 53"):
+        ef.MachineReadableZone.load(_td_as_der('P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<L898902C3xUTO7408122F1204159ZE184226B<<<<<1z'))['document_number_cd']
+    with pytest.raises(ValueError, match="Invalid check digit character 'y' in MRZ at position 63"):
+        ef.MachineReadableZone.load(_td_as_der('P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<L898902C36UTO740812yF1204159ZE184226B<<<<<1z'))['document_number_cd']
+    with pytest.raises(ValueError, match="Invalid check digit character 'z' in MRZ at position 87"):
+        ef.MachineReadableZone.load(_td_as_der('P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<L898902C36UTO7408122F1204159ZE184226B<<<<<1z'))['composite_cd']
