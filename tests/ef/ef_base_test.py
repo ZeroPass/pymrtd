@@ -6,10 +6,10 @@ def test_ef_base():
     #Fuzzy tests
     with pytest.raises(TypeError, match="contents must be a byte string, not NoneType"):
         ElementaryFile.load(None)
-    with pytest.raises(ValueError, match="Insufficient data - 2 bytes requested but only 0 available"):
+    with pytest.raises(ValueError, match="Insufficient data - 1 bytes requested but only 0 available"):
         ElementaryFile.load(bytes())
-    with pytest.raises(ValueError, match="Insufficient data - 2 bytes requested but only 1 available"):
-        ElementaryFile.load(bytes.fromhex('00'))
+    with pytest.raises(ValueError, match="Insufficient data - 1 bytes requested but only 0 available"):
+        ElementaryFile.load(bytes.fromhex('01'))
     with pytest.raises(ValueError, match="Invalid elementary file class, expected class 'application' got 'universal'"):
         ElementaryFile.class_ = CLASS_NAME_TO_NUM_MAP.get('application')
         ElementaryFile.load(bytes.fromhex('0000'))

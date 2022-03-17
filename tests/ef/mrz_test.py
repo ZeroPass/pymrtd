@@ -192,8 +192,10 @@ def test_mrz_parse():
     # Fuzz tests
     with pytest.raises(TypeError, match="encoded_data must be a byte string, not str"):
         ef.MachineReadableZone.load('')
-    with pytest.raises(ValueError, match="Insufficient data - 2 bytes requested but only 0 available"):
+    with pytest.raises(ValueError, match="Insufficient data - 1 bytes requested but only 0 available"):
         ef.MachineReadableZone.load(bytes())
+    with pytest.raises(ValueError, match="Insufficient data - 1 bytes requested but only 0 available"):
+        ef.MachineReadableZone.load(bytes.fromhex('01'))
     with pytest.raises(ValueError, match="Unknown MRZ type"):
         ef.MachineReadableZone.load(_td_as_der(''))
     with pytest.raises(ValueError, match="Unknown MRZ type"):

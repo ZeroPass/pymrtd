@@ -128,9 +128,9 @@ def test_dg1():
     # Fuzz tests
     with pytest.raises(TypeError, match="contents must be a byte string, not NoneType"):
         ef.DG1.load(None)
-    with pytest.raises(ValueError, match="Insufficient data - 2 bytes requested but only 0 available"):
+    with pytest.raises(ValueError, match="Insufficient data - 1 bytes requested but only 0 available"):
         ef.DG1.load(bytes())
-    with pytest.raises(ValueError, match="Insufficient data - 2 bytes requested but only 1 available"):
+    with pytest.raises(ValueError, match="Insufficient data - 1 bytes requested but only 0 available"):
         ef.DG1.load(bytes.fromhex('00'))
     with pytest.raises(ValueError, match="Invalid elementary file class, expected class 'application' got 'universal'"):
         ef.DG1.load(bytes.fromhex('0000'))
