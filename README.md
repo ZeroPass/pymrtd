@@ -1,4 +1,6 @@
 ## Python library for ICAO Machine Readable Travel Documents standard - Biometric Passport
+[![tests](https://github.com/ZeroPass/pymrtd/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/ZeroPass/pymrtd/actions/workflows/tests.yml)
+
 The PyMRTD is python implementation of [ICAO 9303](https://www.icao.int/publications/pages/publication.aspx?docnum=9303) standard.
 It implements only parts of standard needed for Port server. That is, parsing (re-serializing) some of MRTD logical data structures (LDS) files
 and verifying eMRTD trustchain including verification of signature made by MRTD ([AA signature](https://github.com/ZeroPass/port-py-server/blob/949d44b8bebe6d79cb529e8f7d9f922cb39e48a5/src/pymrtd/pki/keys.py#L231-L249)).
