@@ -145,20 +145,20 @@ class SOD(ElementaryFile):
         s = cast(cls, super(SOD, cls).load(encoded_data, strict=strict))
         assert isinstance(s, SOD)
 
-        ci = s.content
-        ctype = ci['content_type'].native
-        if ctype != 'signed_data': # ICAO 9303-10-p21
-            raise SODError(f"Invalid master list content type: {ctype}, should be 'signed_data'")
+            ci = s.content
+            ctype = ci['content_type'].native
+            if ctype != 'signed_data': # ICAO 9303-10-p21
+                raise SODError(f"Invalid content type: '{ctype}', expected 'signed_data'")
 
-        cver = s.signedData.version.native
-        if cver not in ('v1', 'v3', 'v4'): # RFC3369
-            raise SODError(f'Invalid SignedData version: {cver}')
+            sdver = s.signedData.version.native
+            if sdver != 'v3': # ICAO 9303 part 10 - 4.6.2.2
+                raise SODError(f'Invalid SignedData version: {sdver}')
 
         if s.signedData.contentType.dotted != oids.id_mrtd_ldsSecurityObject:
             raise SODError(f'Invalid encapContentInfo type: {s.signedData.contentType.dotted}, should be {oids.id_mrtd_ldsSecurityObject}')
 
-        if 1 < s.ldsSecurityObject.version.value < 0:
-            raise SODError(f'Unsupported LDSSecurityObject version: {s.ldsSecurityObject.version.value}, should be 0 or 1')
+            if not(0 <= s.ldsSecurityObject.version.value <= 1):
+                raise SODError(f'Unsupported LDSSecurityObject version: {s.ldsSecurityObject.version.value}, expected 0 or 1')
 
         assert isinstance(s.signedData.certificates[0], x509.DocumentSignerCertificate) if len(s.signedData.certificates) else True
         assert isinstance(s.signedData.content, LDSSecurityObject)
