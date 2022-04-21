@@ -16,13 +16,12 @@ class ElementaryFile(asn1.Asn1Value):
     _content_spec = None
     _str_rep = None
 
-    def __init__(self, class_=None, tag=None, method=None, contents=None, spec=None, **kwargs):
-
+    def __init__(self, explicit=None, implicit=None, no_explicit=False, tag_type=None, class_=None, tag=None,
+                 optional=None, default=None, contents=None, method=None, spec=None):
         if spec:
             self._content_spec = spec
-
-        super().__init__(class_=class_, tag=tag, contents=contents, *kwargs)
-        self.method   = method
+        super().__init__(explicit=explicit, implicit=implicit, no_explicit=no_explicit, tag_type=tag_type, class_=class_, tag=tag,
+                 optional=optional, default=default, contents=contents, method=method)
         self._content = None
         self._fp      = None
 
