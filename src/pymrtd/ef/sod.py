@@ -163,6 +163,19 @@ class SOD(ElementaryFile):
         assert isinstance(s.signedData.certificates[0], x509.DocumentSignerCertificate) if len(s.signedData.certificates) else True
         assert isinstance(s.signedData.content, LDSSecurityObject)
         return s
+    def dump(self, force=False):
+        """
+        Encodes the value using DER
+
+        :param force:
+            If the encoded contents already exist, clear them and regenerate
+            to ensure they are in DER format instead of BER format
+
+        :return:
+            A byte string of the DER-encoded value
+        """
+        self.contents = self.content.dump(force)
+        return super().dump(force)
 
     def __str__(self):
         """
