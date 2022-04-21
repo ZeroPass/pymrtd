@@ -10,10 +10,6 @@ from typing import List, Optional, Union
 
 def cms_register_content_type(name, oid):
     cms.ContentType._map[oid] = name #pylint: disable=protected-access
-    if cms.ContentType._reverse_map is None: #pylint: disable=protected-access
-        cms.ContentType._reverse_map = { name : oid } #pylint: disable=protected-access
-    else:
-        cms.ContentType._reverse_map[name] = oid #pylint: disable=protected-access
 
 def cms_register_encap_content_info_type(name, oid, type): #pylint: disable=redefined-builtin
     cms_register_content_type(name, oid)
