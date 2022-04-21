@@ -5,7 +5,6 @@ id_icao_cscaMasterList                 = id_icao_mrtd_security + '.2'  # ICAO 93
 id_icao_cscaMasterListSigningKey       = id_icao_mrtd_security + '.3'  # ICAO 9303-12-p27
 id_icao_mrtd_security_aaProtocolObject = id_icao_mrtd_security + '.5'  # ICAO 9303-11-p38
 
-
 # ICAO 9303-11-p37
 bsi_de = '0.4.0.127.0.7'
 
@@ -43,3 +42,6 @@ ecdsa_plain_SHA224     = ecdsa_plain_signatures + '.2'
 ecdsa_plain_SHA256     = ecdsa_plain_signatures + '.3'
 ecdsa_plain_SHA384     = ecdsa_plain_signatures + '.4'
 ecdsa_plain_SHA512     = ecdsa_plain_signatures + '.5'
+
+#PKCS#7
+id_data = '1.2.840.113549.1.7.1'

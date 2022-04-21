@@ -11,6 +11,8 @@ from typing import cast, List, Optional, Union
 from .base import ElementaryFile, LDSVersionInfo
 from .dg import DataGroup, DataGroupNumber
 
+class SODError(Exception):
+    pass
 
 class LDSSecurityObjectVersion(asn1.Integer):
     _map = {
@@ -21,7 +23,6 @@ class LDSSecurityObjectVersion(asn1.Integer):
     @property
     def value(self):
         return int_from_bytes(self.contents, signed=True)
-
 
 class DataGroupHash(asn1.Sequence):
     _fields = [
@@ -94,7 +95,6 @@ class LDSSecurityObject(asn1.Sequence):
         :param dgNumber:
             Data group number to find DataGroupHash object
         '''
-
         assert isinstance(dgNumber, DataGroupNumber)
         return self.dgHashes.find(dgNumber)
 
@@ -114,6 +114,12 @@ class LDSSecurityObject(asn1.Sequence):
         return h.finalize() == dgh.hash
 
 
+class _DataChoice(asn1.Choice): # For OID '1.2.840.113549.1.7.1'
+    _alternatives = [
+        ('data', asn1.OctetString),
+        ('ldsSecurityObject', LDSSecurityObject),
+    ]
+
 class SODSignedData(cms.MrtdSignedData):
     _certificate_spec = x509.DocumentSignerCertificate
     cms.cms_register_encap_content_info_type(
@@ -121,15 +127,25 @@ class SODSignedData(cms.MrtdSignedData):
         oids.id_mrtd_ldsSecurityObject,
         LDSSecurityObject
     )
+    cms.cms_register_encap_content_info_type(
+        'data',
+        oids.id_data,
+        _DataChoice
+    )
+
+    @property
+    def content(self) -> LDSSecurityObject:
+        ''' overloads MrtdSignedData.content '''
+        lso = super().content
+        if isinstance(lso, _DataChoice): # In case of OID '1.2.840.113549.1.7.1'
+            lso = lso.chosen
+        if not isinstance(lso, LDSSecurityObject):
+            raise SODError('SignedData content is not not LDSSecurityObject')
+        return lso
 
 
 class SODContentInfo(cms.MrtdContentInfo):
     _signed_data_spec = SODSignedData
-
-
-class SODError(Exception):
-    pass
-
 
 class SOD(ElementaryFile):
 
@@ -139,11 +155,28 @@ class SOD(ElementaryFile):
 
     _content_spec = SODContentInfo
 
+    _allowedSodContentTypes = {
+        oids.id_data, # Some Chinese passports has this OID instead of id_mrtd_ldsSecurityObject
+    }
+
     @classmethod
-    def load(cls, encoded_data, strict=False):
-        # Parse parent type
-        s = cast(cls, super(SOD, cls).load(encoded_data, strict=strict))
-        assert isinstance(s, SOD)
+    def load(cls, encoded_data: bytes, strict=False) -> "SOD":
+        '''
+        Loads EF.SOD from BER/DER-encoded byte string
+        :param encoded_data:
+            A byte string of BER or DER encoded data
+        :param strict:
+            A boolean indicating if trailing data should be forbidden - if so, a
+            `SODError` will be raised when content type of SignedData is not 2.23.136.1.1.1 or trailing data exists.
+        :return:
+            A instance of the `SOD`
+        :raises:
+            SODError - when an error occurs while parsing `encoded_data`.
+        '''
+        try:
+            # Parse parent type
+            s = cast(cls, super(SOD, cls).load(encoded_data, strict=strict))
+            assert isinstance(s, SOD)
 
             ci = s.content
             ctype = ci['content_type'].native
@@ -154,15 +187,20 @@ class SOD(ElementaryFile):
             if sdver != 'v3': # ICAO 9303 part 10 - 4.6.2.2
                 raise SODError(f'Invalid SignedData version: {sdver}')
 
-        if s.signedData.contentType.dotted != oids.id_mrtd_ldsSecurityObject:
-            raise SODError(f'Invalid encapContentInfo type: {s.signedData.contentType.dotted}, should be {oids.id_mrtd_ldsSecurityObject}')
+            if not cls._valid_content_type(s.signedData.contentType, strict): #s.signedData.contentType.dotted != oids.id_mrtd_ldsSecurityObject:
+                raise SODError(f'Invalid encapContentInfo type: {s.signedData.contentType.dotted}, expected {oids.id_mrtd_ldsSecurityObject}')
 
             if not(0 <= s.ldsSecurityObject.version.value <= 1):
                 raise SODError(f'Unsupported LDSSecurityObject version: {s.ldsSecurityObject.version.value}, expected 0 or 1')
 
-        assert isinstance(s.signedData.certificates[0], x509.DocumentSignerCertificate) if len(s.signedData.certificates) else True
-        assert isinstance(s.signedData.content, LDSSecurityObject)
-        return s
+            assert isinstance(s.signedData.certificates[0], x509.DocumentSignerCertificate) if len(s.signedData.certificates) else True
+            assert isinstance(s.signedData.content, LDSSecurityObject)
+            return s
+        except SODError: raise
+        except AssertionError: raise
+        except Exception as e:
+            raise SODError(e)
+
     def dump(self, force=False):
         """
         Encodes the value using DER
@@ -176,6 +214,12 @@ class SOD(ElementaryFile):
         """
         self.contents = self.content.dump(force)
         return super().dump(force)
+
+    @classmethod
+    def _valid_content_type(cls, ct, strict):
+        oid = ct.dotted
+        return oid == oids.id_mrtd_ldsSecurityObject or \
+            (strict == False and oid in cls._allowedSodContentTypes)
 
     def __str__(self):
         """
