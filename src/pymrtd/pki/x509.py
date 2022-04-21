@@ -298,30 +298,19 @@ class MasterListSignerCertificate(Certificate):
             super()._require_extension_value('extended_key_usage', [id_icao_cscaMasterListSigningKey]) #icao 9303-p12 p20, p27
             super().verify(issuerCert, checkConformance)
 
-
-class DocumentTypeListSyntax(asn1.Sequence):
+class DocumentTypeList:
     """
-    Defines list of document types of which documents the DSC certificate can sign.
+    Base class for the list of document types the DSC certificate can sign.
     The document type as contained in MRZ, e.g. "P" or "ID" where a
     single letter denotes all document types starting with that letter
     where 2 letters denote document mayor type and document sub type.
     Some types: P = passport, I - id card
     See also pymrtd.ef.mrz.DocumentType
     """
-    # Note: Document ICAO-9303-p12 7.1.6 defines the doc. types to be put into single SET OF docTypeList,
-    #       but examining some DSC certificates showed that some CA implemented it wrongly and put
-    #       each doc. type in their own SET OF list object.
-    #       Example of such DSC certificate would be a Moldovan DSC ser. no.:  02B27F8C79935F02
-    #       Parsing of invalid encoded docTypeList will result in partially parsed or unparsed list.
-    # TODO: Try parse invalid encoded docTypeList
-    _fields = [
-        ('version', asn1.Integer),
-        ('docTypeList', asn1.SetOf, {'spec': asn1.PrintableString})
-    ]
 
     @property
     def version(self) -> int:
-        return super().__getitem__('version').native
+        pass
 
     def contains(self, docType: str) -> bool:
         """
@@ -340,6 +329,28 @@ class DocumentTypeListSyntax(asn1.Sequence):
                 return True
         return False
 
+    def dump(self, force=False):
+        pass
+
+class DocumentTypeListSyntax(asn1.Sequence, DocumentTypeList):
+    """
+    Conformant doc list as specified in emRTD standard Document ICAO-9303-p12 7.1.6.
+    """
+    # Note: Document ICAO-9303-p12 7.1.6 defines the doc. types to be put into single SET OF docTypeList,
+    #       but examining some DSC certificates showed that some CA implemented it wrongly and put
+    #       each doc. type in their own SET OF list object.
+    #       Example of such DSC certificate would be a Moldovan DSC ser. no.:  02B27F8C79935F02
+    #       Parsing of invalid encoded docTypeList will result in partially parsed or unparsed list.
+    # TODO: Try parse invalid encoded docTypeList
+    _fields = [
+        ('version', asn1.Integer),
+        ('docTypeList', asn1.SetOf, {'spec': asn1.PrintableString})
+    ]
+
+    @property
+    def version(self) -> int:
+        return super().__getitem__('version').native
+
     def __len__(self):
         return len(self._get_list())
 
@@ -352,12 +363,29 @@ class DocumentTypeListSyntax(asn1.Sequence):
     def _get_list(self) -> asn1.SetOf:
         return super().__getitem__('docTypeList')
 
+class DocumentTypeListSyntax2(asn1.SequenceOf, DocumentTypeList):
+    """
+    Non-conformant document type list.
+    The list encodes only the document types as asn1.SequenceOf<asn1.PrintableString> omiting the version number.
+    This syntax is found in some Chinese, Tanzanian and Philippines passports.
+    """
+    _child_spec = asn1.PrintableString
+
+    @property
+    def version(self) -> int:
+        return 0
+
+class DocumentTypeListChoice(asn1.Choice):
+    _alternatives = [
+        ('mrtdDocumentTypeList', DocumentTypeListSyntax),
+        ('mrtdDocumentTypeList2', DocumentTypeListSyntax2),
+    ]
 
 class DocumentSignerCertificate(Certificate):
     """ Document Signer Certificate (DSC) which should be used to verify SOD data file in eMRTD """
 
     _fields = Certificate._fields
-    _fields[0][1]._fields[9][1]._child_spec._oid_specs['icao_mrtd_document_type_list'] = DocumentTypeListSyntax #pylint: disable=protected-access
+    _fields[0][1]._fields[9][1]._child_spec._oid_specs['icao_mrtd_document_type_list'] = DocumentTypeListChoice #pylint: disable=protected-access
     _fields[0][1]._fields[9][1]._child_spec._fields[0][1]._map['2.23.136.1.1.6.2'] = 'icao_mrtd_document_type_list' # DS document type #pylint: disable=protected-access
 
     #  The DS document type (icao-mrtd-security-extensions-document-type-list) is prioriterized as DSC
@@ -368,7 +396,7 @@ class DocumentSignerCertificate(Certificate):
     _icao_mrtd_document_type_list_value = None
 
     @property
-    def documentTypes(self) -> Optional[DocumentTypeListSyntax]:
+    def documentTypes(self) -> Optional[DocumentTypeList]:
         """
         Returns the list of document types (as type appear in the MRZ) this DSC can sign.
         Note, the DSC certificate must contain extension icao-mrtd-security-extensions-document-type-list (OID=2.23.136.1.1.6.2) or
@@ -380,8 +408,10 @@ class DocumentSignerCertificate(Certificate):
         """
         if not self._processed_extensions:
             self._set_extensions()
-        return self._icao_mrtd_document_type_list_value
-
+        dtls = self._icao_mrtd_document_type_list_value
+        if dtls is not None:
+            dtls = self._icao_mrtd_document_type_list_value.chosen
+        return dtls
 
     def checkConformance(self) -> None:
         """
