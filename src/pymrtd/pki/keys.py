@@ -145,7 +145,7 @@ class PublicKey:
                           ECDSA signature can be bytes of x9.62 format or plain format (R||S).
         :param sigAlgo: Signature algorithm used to produce signature.
         :return: True if signature is valid, otherwise False
-        :raises:  *Exception - if other then InvalidSignature exception is risen.
+        :raises:  *Exception - if other then InvalidSignature exception is raised.
         """
 
         # Convert parent type algos.SignedDigestAlgorithm to SignatureAlgorithm

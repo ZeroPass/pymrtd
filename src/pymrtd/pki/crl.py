@@ -75,7 +75,7 @@ class CertificateRevocationList(CertificateList):
     def checkConformance(self) -> None:
         """
         Verifies that this CRL conform to ICAO 9303 part 12, section 7.1.4 doc.
-        An exception is risen if conformance check fails.
+        An exception is raised if conformance check fails.
         :raises CertificateRevocationListError: If conformance check fails.
         """
         self._require_crl_field('tbs_cert_list')

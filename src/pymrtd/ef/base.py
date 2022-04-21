@@ -66,7 +66,7 @@ class ElementaryFile(asn1.Asn1Value):
         if cls.tag is not None and value.tag != cls.tag:
             raise ElementaryFileError(f"Invalid elementary file tag, expected tag '{cls.tag}' got '{value.tag}'")
 
-        # Force parsing of content. This is done in order for any invalid content to rise an exception
+        # Force parsing of content. This is done in order for any invalid content to raise an exception
         value.content #pylint: disable=pointless-statement
         return value
 

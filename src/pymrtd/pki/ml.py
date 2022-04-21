@@ -113,7 +113,7 @@ class CscaMasterList(MlContentInfo):
     def verify(self, si: cms.SignerInfo, issuerCert: Certificate) -> None:
         '''
         Verifies every SignerInfo object and the digital signature over content.
-        On verification failure a CscaMasterListError exception is risen.
+        On verification failure a CscaMasterListError exception is raised.
         '''
         try:
             self.signedData.verify(si, issuerCert)

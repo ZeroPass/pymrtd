@@ -61,7 +61,7 @@ class Certificate(x509.Certificate):
     def checkConformance(self) -> None:
         """
         Verifies that this certificate conform to the basic X.509 standard.
-        An exception is risen if conformance check fails.
+        An exception is raised if conformance check fails.
         See methods _verify_cert_fields() and _verify_tbs_cert_fields()
         to get information what is checked.
         :raises: CertificateVerificationError if conformance check fails.

@@ -45,9 +45,9 @@ class SignerInfo(cms.SignerInfo):
     @property
     def id(self) -> Optional[Union[cms.IssuerAndSerialNumber, bytes]]:
         """
-        Returns signer certificate identifer in form of 'issuer and serial number'
+        Returns signer certificate identifier in form of 'issuer and serial number'
         or certificate subject key identifier.
-        :return: Signer certificate identifer or None if `version` is not v1 or v3
+        :return: Signer certificate identifier or None if `version` is not v1 or v3
         """
         if self._id is None:
             if self.version.native == 'v1': # IssuerAndSerialNumber
@@ -138,7 +138,7 @@ class SignerInfo(cms.SignerInfo):
         if self.signingTime is not None and not signerCert.isValidOn(self.signingTime):
             raise SignerInfoError("Invalid signing time")
 
-        # Make sure sa is asn1 SET type (DER tag 0x31)
+        # Make sure signedAttrs is asn1 SET type (DER tag 0x31)
         signedAttrs.tag    = 17
         signedAttrs.method = 1
         signedAttrs.class_ = 0
