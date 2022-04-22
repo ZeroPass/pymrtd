@@ -298,6 +298,7 @@ class MasterListSignerCertificate(Certificate):
             super()._require_extension_value('extended_key_usage', [id_icao_cscaMasterListSigningKey]) #icao 9303-p12 p20, p27
             super().verify(issuerCert, checkConformance)
 
+
 class DocumentTypeList:
     """
     Base class for the list of document types the DSC certificate can sign.
@@ -328,6 +329,9 @@ class DocumentTypeList:
             elif t.native == docType:
                 return True
         return False
+
+    def __iter__(self):
+        pass
 
     def dump(self, force=False):
         pass
@@ -378,8 +382,60 @@ class DocumentTypeListSyntax2(asn1.SequenceOf, DocumentTypeList):
 class DocumentTypeListChoice(asn1.Choice):
     _alternatives = [
         ('mrtdDocumentTypeList', DocumentTypeListSyntax),
-        ('mrtdDocumentTypeList2', DocumentTypeListSyntax2),
+        ('mrtdDocumentTypeList2', DocumentTypeListSyntax2)
     ]
+
+    def _setup(self):
+        """
+        Generates _id_map from _alternatives to allow validating contents
+        The override sets _id_map as map of id and list of indices.
+        The reason for this is that both DocumentTypeListSyntax and DocumentTypeListSyntax2 are of type asn1.SEQUENCE
+        """
+        cls = self.__class__
+        cls._id_map = {}
+        cls._name_map = {}
+        for index, info in enumerate(cls._alternatives):
+            if len(info) < 3:
+                info = info + ({},)
+                cls._alternatives[index] = info
+            id_ = asn1._build_id_tuple(info[2], info[1])
+
+            if id_ not in cls._id_map:
+                cls._id_map[id_] = [index]
+            else:
+                cls._id_map[id_] += [index]
+            cls._name_map[info[0]] = index
+
+    def parse(self):
+        """
+        Parses the detected alternative.
+        The alternative is chosen from list of current choice by trying to parse each alternative in choice list.
+
+        :return:
+            An Asn1Value object of the chosen alternative
+        """
+        if self._parsed is None:
+            try:
+                clst = self._choice
+                if isinstance(clst, int):
+                    clst = [clst]
+                for idx, ci in enumerate(clst):
+                    try:
+                        _, spec, params = self._alternatives[ci]
+                        parsed, _ = asn1._parse_build(self._contents, spec=spec, spec_params=params)
+                        list(parsed) # Force parse children to verify if we have valid spec.
+                        self._parsed = parsed
+                        self._choice = ci
+                        break
+                    except Exception as e:
+                        if idx == len(clst) - 1:
+                            raise # We couldn't find any alternative from the list of chosen alternatives
+            except (ValueError, TypeError) as e:
+                args = e.args[1:]
+                e.args = (e.args[0] + '\n    while parsing %s' % asn1.type_name(self),) + args
+                raise e
+        return self._parsed
+
 
 class DocumentSignerCertificate(Certificate):
     """ Document Signer Certificate (DSC) which should be used to verify SOD data file in eMRTD """
