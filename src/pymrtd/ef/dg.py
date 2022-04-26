@@ -100,6 +100,9 @@ class SecurityInfos(asn1.SetOf):
 
 
 class DataGroupNumber(asn1.Integer):
+    min = 1 # DG min value
+    max = 16 # DG max value
+
     _map = {
         1: 'EF.DG1',
         2: 'EF.DG2',
@@ -142,6 +145,9 @@ class DataGroupNumber(asn1.Integer):
             elif value not in DataGroupNumber._map:
                 raise ValueError('Invalid data group number')
         super().set(value)
+
+    def __hash__(self) -> int:
+        return hash(self.value)
 
 
 class DataGroup(ElementaryFile):
