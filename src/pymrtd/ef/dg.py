@@ -205,7 +205,7 @@ class DG14(DataGroup):
             return None
 
         # Get signature algorithm
-        return keys.SignatureAlgorithm({ 'algorithm' : aai['signature_algorithm'] })
+        return keys.SignatureAlgorithm({ 'algorithm' : aai.native['signature_algorithm'] })
 
 
 class DG15(DataGroup):
