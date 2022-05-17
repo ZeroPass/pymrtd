@@ -75,7 +75,7 @@ class SignatureAlgorithm(algos.SignedDigestAlgorithm):
 
 
 class ECDSA_X962_Signature(asn1.Sequence):
-    ''' Represents X9.64 ECDSA signature format '''
+    ''' Represents X9.62 ECDSA signature format '''
 
     _fields = [
         ("r", asn1.Integer),
@@ -89,8 +89,8 @@ class ECDSA_X962_Signature(asn1.Sequence):
         if len(plainSig) % 2 != 0:
             raise ValueError("Cannot convert signature to X9.62 format, signature not even length.")
         l = int(len(plainSig) / 2)
-        r = int.from_bytes(plainSig[:l], byteorder='big', signed=True)
-        s = int.from_bytes(plainSig[l:], byteorder='big', signed=True)
+        r = int.from_bytes(plainSig[:l], byteorder='big', signed=False)
+        s = int.from_bytes(plainSig[l:], byteorder='big', signed=False)
         return cls({"r": r, "s": s})
 
     def toPlain(self) -> bytes:
@@ -257,8 +257,8 @@ from cryptography.hazmat.backends.openssl.ec import ( #pylint: disable=ungrouped
 
 def _new_ec_pub_key_init(self, backend, ec_key_cdata, evp_pkey):
     #pylint: disable=protected-access
-    self._backend = backend
-    self._ec_key = ec_key_cdata
+    self._backend  = backend
+    self._ec_key   = ec_key_cdata
     self._evp_pkey = evp_pkey
     try:
         _mark_asn1_named_ec_curve(backend, ec_key_cdata)
