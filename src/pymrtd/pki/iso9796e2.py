@@ -4,6 +4,8 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from math import ceil
 
+__OPENSSL_RSA_NO_PADDING__ = 3 # https://github.com/openssl/openssl/blob/e40d538ad72c8e496b1dfe7d93c6002ce48351f5/include/openssl/rsa.h#L195
+
 class Dss1VerifierError(Exception):
     pass
 
@@ -97,7 +99,7 @@ class Dss1Verifier:
         res = init(pkey_ctx)
         backend.openssl_assert(res == 1)
         res = backend._lib.EVP_PKEY_CTX_set_rsa_padding(
-            pkey_ctx, backend._lib.RSA_NO_PADDING
+            pkey_ctx, __OPENSSL_RSA_NO_PADDING__
         )
 
         backend.openssl_assert(res > 0)
