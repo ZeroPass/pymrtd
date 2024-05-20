@@ -24,7 +24,7 @@ setup(
     python_requires=">=3.9.11",
     install_requires=[
         'asn1crypto>=1.5.1',
-        'cryptography==41.0.3'
+        'cryptography==42.0.4'
     ],
     extras_require={
         'tests': [
