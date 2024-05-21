@@ -77,12 +77,7 @@ class DataGroup2(asn1.OctetString):
         if not (
             data[0] == 0x46 and data[1] == 0x41 and data[2] == 0x43 and data[3] == 0x00
         ):
-            raise NFCPassportReaderError(
-                "InvalidResponse",
-                datagroup_id=self.datagroup_type,
-                expected_tag=0x46,
-                actual_tag=int(data[0]),
-            )
+            raise NFCPassportReaderError(NFCPassportReaderError.INVALID_DATA)
 
         offset = 4
         self.version_number = self.bin_to_int(data, offset, 4)
