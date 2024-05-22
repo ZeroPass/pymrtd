@@ -1,125 +1,31 @@
 import asn1crypto.core as asn1
 from asn1crypto.util import int_from_bytes
-from asn1crypto.keys import PublicKeyInfo
-from pymrtd.pki import keys, oids
-from typing import Union #pylint: disable=wrong-import-order
 
 from .base import ElementaryFile
-from .mrz import MachineReadableZone
-
-class ActiveAuthenticationInfoId(asn1.ObjectIdentifier):
-    _map = {
-        oids.id_icao_mrtd_security_aaProtocolObject: 'aa_info',
-    }
-
-
-class ActiveAuthenticationInfo(asn1.Sequence):
-    _fields = [
-        ('protocol', ActiveAuthenticationInfoId),
-        ('version', asn1.Integer),
-        ('signature_algorithm', keys.SignatureAlgorithmId)
-    ]
-
-
-class ChipAuthenticationInfoId(asn1.ObjectIdentifier):
-    _map = {
-        oids.id_CA_DH_3DES_CBC_CBC       : 'ca_dh_3des_cbc_cbc',
-        oids.id_CA_DH_AES_CBC_CMAC_128   : 'ca_dh_aes_cbc_cmac_128',
-        oids.id_CA_DH_AES_CBC_CMAC_192   : 'ca_dh_aes_cbc_cmac_192',
-        oids.id_CA_DH_AES_CBC_CMAC_256   : 'ca_dh_aes_cbc_cmac_256',
-        oids.id_CA_ECDH_3DES_CBC_CBC     : 'ca_ecdh_3des_cbc_cbc',
-        oids.id_CA_ECDH_AES_CBC_CMAC_128 : 'ca_ecdh_aes_cbc_cmac_128',
-        oids.id_CA_ECDH_AES_CBC_CMAC_192 : 'ca_ecdh_aes_cbc_cmac_192',
-        oids.id_CA_ECDH_AES_CBC_CMAC_256 : 'ca_ecdh_aes_cbc_cmac_256'
-    }
-
-
-class ChipAuthenticationInfo(asn1.Sequence):
-    _fields = [
-        ('protocol', ChipAuthenticationInfoId),
-        ('version', asn1.Integer),
-        ('key_id', asn1.Integer, {'optional': True})
-    ]
-
-
-class ChipAuthenticationPublicKeyInfoId(asn1.ObjectIdentifier):
-    _map = {
-        oids.id_PK_DH   : 'pk_dh',
-        oids.id_PK_ECDH : 'pk_ecdh'
-    }
-
-
-class ChipAuthenticationPublicKeyInfo(asn1.Sequence):
-    _fields = [
-        ('protocol', ChipAuthenticationPublicKeyInfoId),
-        ('chip_auth_public_key', PublicKeyInfo),
-        ('key_id', asn1.Integer, {'optional': True})
-    ]
-
-
-class DefaultSecurityInfo(asn1.Sequence):
-    _fields = [
-        ('protocol', asn1.ObjectIdentifier),
-        ('required_data', asn1.Any),
-        ('optional', asn1.Any, {'optional': True})
-    ]
-
-
-class SecurityInfo(asn1.Choice):
-    _alternatives = [
-        ('security_info', DefaultSecurityInfo),
-        ('aa_info', ActiveAuthenticationInfo),
-        ('chip_auth_info', ChipAuthenticationInfo),
-        ('chip_auth_pub_key_info', ChipAuthenticationPublicKeyInfo)
-        #Note: Missing PACEDomainParameterInfo and PACEInfo
-    ]
-
-    def validate(self, class_, tag, contents):
-        """ this function select proper SecurityInfo choice index based on OID """
-        oid = asn1.ObjectIdentifier.load(contents).dotted
-
-        self._choice = 0
-        for index, info in enumerate(self._alternatives):
-            toidm = info[1]._fields[0][1]._map #pylint: disable=protected-access
-            if toidm is not None and oid in toidm:
-                self._choice = index
-                return
-
-    def parse(self):
-        if self._parsed is None:
-            super().parse()
-            if self.name == 'aa_info' or self.name == 'chip_auth_info':
-                if self._parsed['version'].native != 1:
-                    from asn1crypto._types import type_name #pylint: disable=import-outside-toplevel
-                    raise ValueError(f'{type_name(self._parsed)} version != 1')
-        return self._parsed
-
-
-class SecurityInfos(asn1.SetOf):
-    _child_spec = SecurityInfo
+from .errors import NFCPassportReaderError
 
 
 class DataGroupNumber(asn1.Integer):
-    min = 1 # DG min value
-    max = 16 # DG max value
+    min = 1  # DG min value
+    max = 16  # DG max value
 
     _map = {
-        1: 'EF.DG1',
-        2: 'EF.DG2',
-        3: 'EF.DG3',
-        4: 'EF.DG4',
-        5: 'EF.DG5',
-        6: 'EF.DG6',
-        7: 'EF.DG7',
-        8: 'EF.DG8',
-        9: 'EF.DG9',
-        10: 'EF.DG10',
-        11: 'EF.DG11',
-        12: 'EF.DG12',
-        13: 'EF.DG13',
-        14: 'EF.DG14',
-        15: 'EF.DG15',
-        16: 'EF.DG16'
+        1: "EF.DG1",
+        2: "EF.DG2",
+        3: "EF.DG3",
+        4: "EF.DG4",
+        5: "EF.DG5",
+        6: "EF.DG6",
+        7: "EF.DG7",
+        8: "EF.DG8",
+        9: "EF.DG9",
+        10: "EF.DG10",
+        11: "EF.DG11",
+        12: "EF.DG12",
+        13: "EF.DG13",
+        14: "EF.DG14",
+        15: "EF.DG15",
+        16: "EF.DG16",
     }
 
     @property
@@ -138,12 +44,12 @@ class DataGroupNumber(asn1.Integer):
 
     def set(self, value):
         if isinstance(value, int):
-            if value == 21: # DG2 tag
+            if value == 21:  # DG2 tag
                 value = 2
-            elif value == 22: # DG4 tag
+            elif value == 22:  # DG4 tag
                 value = 4
             elif value not in DataGroupNumber._map:
-                raise ValueError('Invalid data group number')
+                raise ValueError("Invalid data group number")
         super().set(value)
 
     def __hash__(self) -> int:
@@ -159,68 +65,63 @@ class DataGroup(ElementaryFile):
         Returns string representation of self i.e. EF.DG<No>(fp=XXXXXXXXXXXXXXXX)
         """
         if self._str_rep is None:
-            self._str_rep = super().__str__()\
-                .replace("EF(", f'{self.number.native}(', 1)
+            self._str_rep = (
+                super().__str__().replace("EF(", f"{self.number.native}(", 1)
+            )
         return self._str_rep
 
     @property
     def number(self) -> DataGroupNumber:
         return DataGroupNumber(self.tag)
 
+    def get_next_tag(self) -> int:
+        tag = 0
 
-class DG1(DataGroup):
-    tag = 1
-    _content_spec = MachineReadableZone
+        # Fix for some passports that may have invalid data - ensure that we do have data!
+        if len(self.data) <= self.pos:
+            raise NFCPassportReaderError(NFCPassportReaderError.INVALID_DATA)
 
-    @property
-    def mrz(self) -> MachineReadableZone:
-        return self.content
+        if self.bin_to_hex(self.data[self.pos : self.pos + 1]) & 0x0F == 0x0F:
+            tag = self.bin_to_hex(self.data[self.pos : self.pos + 2])
+            self.pos += 2
+        else:
+            tag = self.data[self.pos]
+            self.pos += 1
 
-    @property
-    def native(self):
-        return { 'mrz': self.mrz.native }
+        return tag
 
+    def verify_tag(self, tag, valid_values):
+        if isinstance(valid_values, list):
+            if tag not in valid_values:
+                raise NFCPassportReaderError(NFCPassportReaderError.INVALID_TAG)
+        else:
+            if tag != valid_values:
+                raise NFCPassportReaderError("InvalidTag")
 
-class DG14(DataGroup):
-    tag = 14
-    _content_spec = SecurityInfos
+    def asn1_length(self, data: bytes) -> tuple:
+        if data[0] < 0x80:
+            return int(data[0]), 1
+        if data[0] == 0x81:
+            return int(data[1]), 2
+        if data[0] == 0x82:
+            val = int.from_bytes(data[1:3], byteorder="big")
+            return val, 3
+        raise NFCPassportReaderError(NFCPassportReaderError.INVALID_LENGTH)
 
-    @property
-    def aaInfo(self) -> Union[ActiveAuthenticationInfo, None]:
-        ''' Returns ActiveAuthenticationInfo if in list otherwise None. '''
+    def get_next_length(self) -> int:
+        end = self.pos + 4 if self.pos + 4 < len(self.data) else len(self.data)
+        length, len_offset = self.asn1_length(self.data[self.pos : end])
+        self.pos += len_offset
+        return length
 
-        # Loop over list of SecurityInfo objects and try to find ActiveAuthentication object
-        # Should contain only one ActiveAuthenticationInfo
-        for si in self.content:
-            if isinstance(si.chosen, ActiveAuthenticationInfo):
-                return si
-        return None
+    def get_next_value(self) -> bytes:
+        length = self.get_next_length()
+        value = self.data[self.pos : self.pos + length]
+        self.pos += length
+        return value
 
-    @property
-    def aaSignatureAlgo(self) -> keys.SignatureAlgorithm:
-        ''' Returns SignatureAlgorithm object or None if DG doesn't contain one. '''
+    def bin_to_int(self, data: bytes, offset: int, length: int) -> int:
+        return int.from_bytes(data[offset : offset + length], byteorder="big")
 
-        aai = self.aaInfo
-        if aai is None:
-            return None
-
-        # Get signature algorithm
-        return keys.SignatureAlgorithm({ 'algorithm' : aai.native['signature_algorithm'] })
-
-
-class DG15(DataGroup):
-    tag = 15
-    _content_spec = PublicKeyInfo
-    _aakey: keys.AAPublicKey
-
-    @property
-    def aaPublicKeyInfo(self) -> PublicKeyInfo:
-        ''' Returns active authentication public key info '''
-        return self.content
-
-    @property
-    def aaPublicKey(self) -> keys.AAPublicKey:
-        ''' Returns active authentication public key '''
-        if not hasattr(self, '_aakey'):
-            self._aakey = keys.AAPublicKey.load(self.aaPublicKeyInfo.dump())
-        return self._aakey
+    def bin_to_hex(self, data: bytes) -> int:
+        return int.from_bytes(data, byteorder="big")
