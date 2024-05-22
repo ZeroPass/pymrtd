@@ -1,8 +1,10 @@
 import asn1crypto.core as asn1
+
+from .dg import DataGroup
 from .errors import NFCPassportReaderError
 
 
-class DataGroup2(asn1.OctetString):
+class DataGroup2(asn1.OctetString, DataGroup):
     class_ = 2
     tag = 21
 
@@ -148,54 +150,15 @@ class DataGroup2(asn1.OctetString):
 
         self.image_data = list(data[offset:])
 
-    def get_next_tag(self) -> int:
-        tag = 0
 
-        # Fix for some passports that may have invalid data - ensure that we do have data!
-        if len(self.data) <= self.pos:
-            raise NFCPassportReaderError(NFCPassportReaderError.INVALID_DATA)
+class DG2(DataGroup):
+    tag = 21
+    _content_spec = DataGroup2
 
-        if self.bin_to_hex(self.data[self.pos : self.pos + 1]) & 0x0F == 0x0F:
-            tag = self.bin_to_hex(self.data[self.pos : self.pos + 2])
-            self.pos += 2
-        else:
-            tag = self.data[self.pos]
-            self.pos += 1
+    @property
+    def portrait(self) -> DataGroup2:
+        return self.content
 
-        return tag
-
-    def verify_tag(self, tag, valid_values):
-        if isinstance(valid_values, list):
-            if tag not in valid_values:
-                raise NFCPassportReaderError(NFCPassportReaderError.INVALID_TAG)
-        else:
-            if tag != valid_values:
-                raise NFCPassportReaderError("InvalidTag")
-
-    def asn1_length(self, data: bytes) -> tuple:
-        if data[0] < 0x80:
-            return int(data[0]), 1
-        if data[0] == 0x81:
-            return int(data[1]), 2
-        if data[0] == 0x82:
-            val = int.from_bytes(data[1:3], byteorder="big")
-            return val, 3
-        raise NFCPassportReaderError(NFCPassportReaderError.INVALID_LENGTH)
-
-    def get_next_length(self) -> int:
-        end = self.pos + 4 if self.pos + 4 < len(self.data) else len(self.data)
-        length, len_offset = self.asn1_length(self.data[self.pos : end])
-        self.pos += len_offset
-        return length
-
-    def get_next_value(self) -> bytes:
-        length = self.get_next_length()
-        value = self.data[self.pos : self.pos + length]
-        self.pos += length
-        return value
-
-    def bin_to_int(self, data: bytes, offset: int, length: int) -> int:
-        return int.from_bytes(data[offset : offset + length], byteorder="big")
-
-    def bin_to_hex(self, data: bytes) -> int:
-        return int.from_bytes(data, byteorder="big")
+    @property
+    def native(self):
+        return {"portrait": self.portrait}
