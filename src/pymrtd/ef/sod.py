@@ -128,6 +128,11 @@ class SODSignedData(cms.MrtdSignedData):
         LDSSecurityObject
     )
     cms.cms_register_encap_content_info_type(
+        "ldsSecurityObject_alt",
+        oids.id_mrtd_ldsSecurityObjectAlt,
+        LDSSecurityObject
+    )
+    cms.cms_register_encap_content_info_type(
         'data',
         oids.id_data,
         _DataChoice
@@ -218,8 +223,11 @@ class SOD(ElementaryFile):
     @classmethod
     def _valid_content_type(cls, ct, strict):
         oid = ct.dotted
-        return oid == oids.id_mrtd_ldsSecurityObject or \
-            (strict == False and oid in cls._allowedSodContentTypes)
+        return (
+            oid == oids.id_mrtd_ldsSecurityObject
+            or oid == oids.id_mrtd_ldsSecurityObjectAlt
+            or (not strict and oid in cls._allowedSodContentTypes)
+        )
 
     def __str__(self):
         """
