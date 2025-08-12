@@ -92,7 +92,8 @@ if not sod.ldsSecurityObject.contains(dg15):
 # If ECC signature, get ECC signature algorithm from EF.DG14 file
 sigAlgo = None
 if dg15.aaPublicKey.isEcKey():
-  dg14 = SOD.load(...)
+  # Get ECC signature algorithm
+  dg14 = DG14.load(...)
   if not sod.ldsSecurityObject.contains(dg14): # Verify EF.DG14 was issued by country
     raise Exception("Can't verify signature, invalid EF.DG14 file")
   elif dg14.aaSignatureAlgo is None: # sanity check
