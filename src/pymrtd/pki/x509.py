@@ -316,15 +316,16 @@ class DocumentTypeList:
     def contains(self, docType: str) -> bool:
         """
         Function check if list contains specific document type.
-        :param docType: Document type to verify. Single letter denotes mayjor type. e.g. P, PB, I, ID
-        :return: If docType is single letter i.e. major type than True is returned
-        on first occurrence of document type in the list that begins with that letter.
-        Otherwise True is returned only if docType matches any of the full types in the list.
+        Single letter in list denotes major type, e.g. P, I etc...
+        :param docType: Document type to verify. 
+        :return: True if docType matches any type in the list or matches major type in the list.
         """
-        majorType = len(docType) == 1
+        if not (1 <= len(docType) <= 2):
+            return False
         for t in self:
+            majorType = len(t.native) == 1
             if majorType:
-                if t.native[0] == docType:
+                if docType.startswith( t.native[0] ):
                     return True
             elif t.native == docType:
                 return True
