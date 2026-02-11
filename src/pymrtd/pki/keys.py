@@ -275,4 +275,4 @@ else:
             self._curve = None
 
     _EllipticCurvePublicKey.__init__ = _new_ec_pub_key_init
-    logger.info("Applied _EllipticCurvePublicKey monkey patch (if internals present)")
+    logger.info("Applied _EllipticCurvePublicKey monkey patch")
