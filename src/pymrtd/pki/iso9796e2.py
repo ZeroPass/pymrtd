@@ -86,49 +86,70 @@ class Dss1Verifier:
         #pylint: disable=protected-access
         key = self._pub_key
         
-        # Get backend - handle both old and new cryptography versions
+        # Try to use the low-level OpenSSL interface first (for older cryptography versions)
         try:
-            backend = key._backend
-        except AttributeError:
-            # Newer versions of cryptography don't have _backend attribute
-            backend = default_backend()
+            # Get backend - handle both old and new cryptography versions
+            try:
+                backend = key._backend
+            except AttributeError:
+                # Newer versions of cryptography don't have _backend attribute
+                backend = default_backend()
 
-        init = backend._lib.EVP_PKEY_encrypt_init
-        crypt = backend._lib.EVP_PKEY_encrypt
+            init = backend._lib.EVP_PKEY_encrypt_init
+            crypt = backend._lib.EVP_PKEY_encrypt
 
-        pkey_ctx = backend._lib.EVP_PKEY_CTX_new(
-            key._evp_pkey, backend._ffi.NULL
-        )
+            pkey_ctx = backend._lib.EVP_PKEY_CTX_new(
+                key._evp_pkey, backend._ffi.NULL
+            )
 
-        backend.openssl_assert(pkey_ctx != backend._ffi.NULL)
-        pkey_ctx = backend._ffi.gc(pkey_ctx, backend._lib.EVP_PKEY_CTX_free)
-        res = init(pkey_ctx)
-        backend.openssl_assert(res == 1)
-        res = backend._lib.EVP_PKEY_CTX_set_rsa_padding(
-            pkey_ctx, __OPENSSL_RSA_NO_PADDING__
-        )
+            backend.openssl_assert(pkey_ctx != backend._ffi.NULL)
+            pkey_ctx = backend._ffi.gc(pkey_ctx, backend._lib.EVP_PKEY_CTX_free)
+            res = init(pkey_ctx)
+            backend.openssl_assert(res == 1)
+            res = backend._lib.EVP_PKEY_CTX_set_rsa_padding(
+                pkey_ctx, __OPENSSL_RSA_NO_PADDING__
+            )
 
-        backend.openssl_assert(res > 0)
-        buf_size = backend._lib.EVP_PKEY_size(key._evp_pkey)
-        backend.openssl_assert(buf_size > 0)
+            backend.openssl_assert(res > 0)
+            buf_size = backend._lib.EVP_PKEY_size(key._evp_pkey)
+            backend.openssl_assert(buf_size > 0)
 
-        outlen = backend._ffi.new("size_t *", buf_size)
-        buf = backend._ffi.new("unsigned char[]", buf_size)
-        res = crypt(pkey_ctx, buf, outlen, sig, len(sig))
-        if res <= 0:
-            backend._consume_errors()
-            raise Dss1VerifierError("Decrypting signature failed")
+            outlen = backend._ffi.new("size_t *", buf_size)
+            buf = backend._ffi.new("unsigned char[]", buf_size)
+            res = crypt(pkey_ctx, buf, outlen, sig, len(sig))
+            if res <= 0:
+                backend._consume_errors()
+                raise Dss1VerifierError("Decrypting signature failed")
 
-        F = backend._ffi.buffer(buf)[:outlen[0]]
-
-        # TODO: Verify OpenSSL performs following check specified in ISO 9796-2 paragraph B.7 (A.7 in 2002 publ.):
-        #I = int.from_bytes(F, byteorder="big")
-        #if I % 16 != 12:
-        #    raise Dss1VerifierError("Decrypting signature failed")
-        #if I > 2**(len(sig)*8 - 1) - 1:
-        #    raise Dss1VerifierError("Decrypting signature failed")
-
-        return F
+            F = backend._ffi.buffer(buf)[:outlen[0]]
+            return F
+            
+        except (AttributeError, Exception):
+            # Fallback for newer cryptography versions that don't expose low-level OpenSSL APIs
+            # Use pure Python implementation of RSA with no padding
+            try:
+                # Get RSA public key parameters
+                public_numbers = key.public_numbers()
+                n = public_numbers.n
+                e = public_numbers.e
+                
+                # Convert signature bytes to integer
+                sig_int = int.from_bytes(sig, byteorder='big')
+                
+                # Perform RSA public key operation: m = s^e mod n
+                # This is equivalent to "decrypting" with the public key (RSA signature verification primitive)
+                if sig_int >= n:
+                    raise Dss1VerifierError("Decrypting signature failed")
+                    
+                m_int = pow(sig_int, e, n)
+                
+                # Convert back to bytes with proper padding
+                key_size = (key.key_size + 7) // 8
+                F = m_int.to_bytes(key_size, byteorder='big')
+                
+                return F
+            except Exception as ex:
+                raise Dss1VerifierError("Decrypting signature failed") from ex
 
     @staticmethod
     def _construct_M(M1: bytes, M2: bytes, partial_recovery: bool):
