@@ -8,6 +8,9 @@ from cryptography import exceptions as cryptography_exceptions
 
 from pymrtd.pki import algo_utils, iso9796e2, oids
 from typing import Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 class SignatureAlgorithmId(algos.SignedDigestAlgorithmId):
     _map = dict(algos.SignedDigestAlgorithmId._map, **{
@@ -248,14 +251,17 @@ class AAPublicKey(PublicKey):
             raise ValueError("Unsupported digital signature scheme")
 
 # Monkey patch _EllipticCurvePublicKey to allow unnamed curves (explicit params)
+# Apply only when cryptography internal API is present; skip otherwise (cryptography >=46)
 try:
-    from cryptography.hazmat.backends.openssl.ec import ( #pylint: disable=ungrouped-imports,wrong-import-position
+    from cryptography.hazmat.backends.openssl.ec import (  #pylint: disable=ungrouped-imports,wrong-import-position
         _EllipticCurvePublicKey,
         _mark_asn1_named_ec_curve,
         _ec_key_curve_sn,
-        _sn_to_elliptic_curve
+        _sn_to_elliptic_curve,
     )
-
+except ImportError:
+    logger.debug("cryptography internals not available; skipping EC monkey patch")
+else:
     def _new_ec_pub_key_init(self, backend, ec_key_cdata, evp_pkey):
         #pylint: disable=protected-access
         self._backend  = backend
@@ -265,11 +271,8 @@ try:
             _mark_asn1_named_ec_curve(backend, ec_key_cdata)
             sn = _ec_key_curve_sn(backend, ec_key_cdata)
             self._curve = _sn_to_elliptic_curve(backend, sn)
-        except: #pylint: disable=bare-except
+        except Exception:
             self._curve = None
 
     _EllipticCurvePublicKey.__init__ = _new_ec_pub_key_init
-except ImportError:
-    # Newer versions of cryptography have removed this internal API
-    # The monkey patch is not applied, which may affect support for unnamed curves
-    pass
+    logger.info("Applied _EllipticCurvePublicKey monkey patch (if internals present)")
