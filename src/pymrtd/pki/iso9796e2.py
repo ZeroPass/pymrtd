@@ -128,10 +128,21 @@ class Dss1Verifier:
             # Fallback for newer cryptography versions that don't expose low-level OpenSSL APIs
             # Use pure Python implementation of RSA with no padding
             try:
+                # Validate signature before processing
+                if not sig or len(sig) == 0:
+                    raise Dss1VerifierError("Decrypting signature failed")
+                
                 # Get RSA public key parameters
                 public_numbers = key.public_numbers()
                 n = public_numbers.n
                 e = public_numbers.e
+                
+                # Calculate expected key size
+                key_size = (key.key_size + 7) // 8
+                
+                # Validate signature length matches key size
+                if len(sig) != key_size:
+                    raise Dss1VerifierError("Decrypting signature failed")
                 
                 # Convert signature bytes to integer
                 sig_int = int.from_bytes(sig, byteorder='big')
@@ -144,7 +155,6 @@ class Dss1Verifier:
                 m_int = pow(sig_int, e, n)
                 
                 # Convert back to bytes with proper padding
-                key_size = (key.key_size + 7) // 8
                 F = m_int.to_bytes(key_size, byteorder='big')
                 
                 return F
