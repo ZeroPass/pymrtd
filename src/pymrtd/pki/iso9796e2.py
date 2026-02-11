@@ -84,8 +84,14 @@ class Dss1Verifier:
               See ICAO 9303-11 p24.
         """
         #pylint: disable=protected-access
-        backend = self._pub_key._backend
         key = self._pub_key
+        
+        # Get backend - handle both old and new cryptography versions
+        try:
+            backend = key._backend
+        except AttributeError:
+            # Newer versions of cryptography don't have _backend attribute
+            backend = default_backend()
 
         init = backend._lib.EVP_PKEY_encrypt_init
         crypt = backend._lib.EVP_PKEY_encrypt
