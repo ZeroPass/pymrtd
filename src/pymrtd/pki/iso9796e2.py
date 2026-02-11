@@ -129,7 +129,7 @@ class Dss1Verifier:
             # Use pure Python implementation of RSA with no padding
             try:
                 # Validate signature before processing
-                if not sig or len(sig) == 0:
+                if not sig:
                     raise Dss1VerifierError("Decrypting signature failed")
                 
                 # Get RSA public key parameters
