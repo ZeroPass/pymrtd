@@ -251,7 +251,7 @@ class AAPublicKey(PublicKey):
             raise ValueError("Unsupported digital signature scheme")
 
 # Monkey patch _EllipticCurvePublicKey to allow unnamed curves (explicit params)
-# Apply only when cryptography internal API is present; skip otherwise (cryptography >=46)
+# Apply only when cryptography internal API is present; skip otherwise (cryptography >=46.0.0)
 try:
     from cryptography.hazmat.backends.openssl.ec import (  #pylint: disable=ungrouped-imports,wrong-import-position
         _EllipticCurvePublicKey,
