@@ -107,23 +107,6 @@ catch:
   raise Exception("Signature verification failed")
 ```
 
-## Testing
-
-To run tests locally on your PR or branch without modifying CI workflow files:
-
-```bash
-# Install test dependencies
-pip install -e .[tests]
-
-# Run all tests
-pytest tests -v
-
-# Run specific tests
-pytest tests/test_ecc_verification.py -v
-```
-
-For detailed testing instructions, see [TESTING.md](TESTING.md).
-
 ## Other documentation
 * [ICAO 9303 Specifications Common to all MRTDs](https://www.icao.int/publications/Documents/9303_p3_cons_en.pdf)
 * [ICAO 9303 Specifications for Machine Readable Passports (MRPs) and other TD3 Size MRTDs](https://www.icao.int/publications/Documents/9303_p4_cons_en.pdf)
