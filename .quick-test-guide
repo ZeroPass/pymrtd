@@ -1,0 +1,47 @@
+# Quick Test Reference
+
+## Run Tests Locally (Without Modifying CI)
+
+### One-Time Setup
+```bash
+pip install -e .[tests]
+```
+
+### Run All Tests
+```bash
+pytest tests
+```
+
+### Run Specific Test File
+```bash
+pytest tests/test_ecc_verification.py -v
+```
+
+### Run Specific Test Function
+```bash
+pytest tests/test_ecc_verification.py::test_ec_verify_x962_signature -v
+```
+
+### Run Tests in a Directory
+```bash
+pytest tests/pki/ -v
+```
+
+### Common Options
+```bash
+pytest tests -v           # Verbose output
+pytest tests -vv          # Very verbose output
+pytest tests -s           # Show print statements
+pytest tests -x           # Stop on first failure
+pytest tests --maxfail=3  # Stop after 3 failures
+```
+
+### CI Replication
+```bash
+# Replicate exactly what CI does:
+python -m pip install --upgrade pip
+python -m pip install -r requirements-dev.txt
+pytest tests
+```
+
+For more details, see [TESTING.md](TESTING.md).
