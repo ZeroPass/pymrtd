@@ -256,8 +256,16 @@ class MrtdSignedData(cms.SignedData):
     @staticmethod
     def _get_signer_cert_by_sni(cert_list: CertList, sni: cms.IssuerAndSerialNumber):
         for c in cert_list:
-            if c.serial_number == sni['serial_number'].native and c.issuer == sni['issuer']:
-                return c
+            if c.serial_number == sni['serial_number'].native:
+                found = False
+                for field in sni['issuer'].native:
+                    if field in c.issuer.native:
+                        found = sni['issuer'].native[field] == c.issuer.native[field]
+                    else:
+                        found = False
+                        break
+                if found:
+                    return c
         return None
 
     @staticmethod
