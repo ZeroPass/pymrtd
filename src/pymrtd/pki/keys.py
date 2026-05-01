@@ -1,4 +1,6 @@
-from asn1crypto import algos, core as asn1
+from functools import lru_cache
+
+from asn1crypto import algos, core as asn1, keys as asn1_keys
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -6,29 +8,31 @@ from cryptography.hazmat.primitives.asymmetric import dsa, rsa, ed25519, ec as e
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography import exceptions as cryptography_exceptions
 
-from pymrtd.pki import algo_utils, iso9796e2, oids
 from typing import Optional
+
+from pymrtd.pki import oids, algo_utils, iso9796e2
+
 
 class SignatureAlgorithmId(algos.SignedDigestAlgorithmId):
     _map = dict(algos.SignedDigestAlgorithmId._map, **{
-        oids.ecdsa_plain_SHA1   : 'sha1_plain_ecdsa',
-        oids.ecdsa_plain_SHA224 : 'sha224_plain_ecdsa',
-        oids.ecdsa_plain_SHA256 : 'sha256_plain_ecdsa',
-        oids.ecdsa_plain_SHA384 : 'sha384_plain_ecdsa',
-        oids.ecdsa_plain_SHA512 : 'sha512_plain_ecdsa'
+        oids.ecdsa_plain_SHA1:   'sha1_plain_ecdsa',
+        oids.ecdsa_plain_SHA224: 'sha224_plain_ecdsa',
+        oids.ecdsa_plain_SHA256: 'sha256_plain_ecdsa',
+        oids.ecdsa_plain_SHA384: 'sha384_plain_ecdsa',
+        oids.ecdsa_plain_SHA512: 'sha512_plain_ecdsa'
     })
 
     _reverse_map = dict(algos.SignedDigestAlgorithmId._reverse_map, **{
-        'sha1_plain_ecdsa'   : oids.ecdsa_plain_SHA1,
-        'sha224_plain_ecdsa' : oids.ecdsa_plain_SHA224,
-        'sha256_plain_ecdsa' : oids.ecdsa_plain_SHA256,
-        'sha384_plain_ecdsa' : oids.ecdsa_plain_SHA384,
-        'sha512_plain_ecdsa' : oids.ecdsa_plain_SHA512
+        'sha1_plain_ecdsa':   oids.ecdsa_plain_SHA1,
+        'sha224_plain_ecdsa': oids.ecdsa_plain_SHA224,
+        'sha256_plain_ecdsa': oids.ecdsa_plain_SHA256,
+        'sha384_plain_ecdsa': oids.ecdsa_plain_SHA384,
+        'sha512_plain_ecdsa': oids.ecdsa_plain_SHA512
     })
 
 
 class SignatureAlgorithm(algos.SignedDigestAlgorithm):
-    _fields  = [
+    _fields = [
         ('algorithm', SignatureAlgorithmId),
         *algos.SignedDigestAlgorithm._fields[1:]
     ]
@@ -44,7 +48,7 @@ class SignatureAlgorithm(algos.SignedDigestAlgorithm):
 
         algorithm = self['algorithm'].native
         algo_map = {
-            'sha1_plain_ecdsa': 'ecdsa',
+            'sha1_plain_ecdsa':   'ecdsa',
             'sha224_plain_ecdsa': 'ecdsa',
             'sha256_plain_ecdsa': 'ecdsa',
             'sha384_plain_ecdsa': 'ecdsa',
@@ -62,7 +66,7 @@ class SignatureAlgorithm(algos.SignedDigestAlgorithm):
 
         algorithm = self['algorithm'].native
         algo_map = {
-            'sha1_plain_ecdsa': 'sha1',
+            'sha1_plain_ecdsa':   'sha1',
             'sha224_plain_ecdsa': 'sha224',
             'sha256_plain_ecdsa': 'sha256',
             'sha384_plain_ecdsa': 'sha384',
@@ -106,6 +110,68 @@ class ECDSA_X962_Signature(asn1.Sequence):
                 s = b'\x00' * int(lr - ls) + s
         return r + s
 
+
+@lru_cache(maxsize=1)
+def _get_runtime_supported_ec_curves() -> tuple[ecc.EllipticCurve, ...]:
+    """
+    Returns the EC curve instances supported by the current cryptography runtime.
+    """
+    curves = []
+    for attr in dir(ecc):
+        value = getattr(ecc, attr)
+        if not isinstance(value, type):
+            continue
+        if value is ecc.EllipticCurve:
+            continue
+        if not issubclass(value, ecc.EllipticCurve):
+            continue
+        try:
+            curves.append(value())
+        except TypeError:
+            # Ignore abstract / non-default-constructible classes.
+            continue
+    return tuple(curves)
+
+
+def _load_explicit_ec_pubkey_with_runtime_supported_curves(der_encoded_key: bytes):
+    """
+    Loads EC SubjectPublicKeyInfo with explicit parameters by probing runtime-supported
+    curves and picking the one that validates the encoded point.
+    Returns EllipticCurvePublicKey on success, otherwise None.
+    """
+    try:
+        public_key_info = asn1_keys.PublicKeyInfo.load(der_encoded_key)
+        if public_key_info.algorithm != 'ec':
+            return None
+
+        curve_data = public_key_info.curve
+        if curve_data[0] != 'specified':
+            return None
+
+        encoded_point = public_key_info['public_key'].native
+        if not isinstance(encoded_point, bytes) or not encoded_point:
+            return None
+
+        expected_bits = None
+        field_id = curve_data[1].get('field_id', {})
+        if field_id.get('field_type') == 'prime_field':
+            expected_bits = int(field_id['parameters']).bit_length()
+
+        supported_curves = _get_runtime_supported_ec_curves()
+        if expected_bits is not None:
+            supported_curves = tuple(c for c in supported_curves if c.key_size == expected_bits)
+
+        for curve in supported_curves:
+            try:
+                return ecc.EllipticCurvePublicKey.from_encoded_point(curve, encoded_point)
+            except Exception:
+                continue
+    except Exception:
+        return None
+
+    return None
+
+
 class PublicKey:
     ''' General class which represents public key for PKI '''
 
@@ -114,9 +180,21 @@ class PublicKey:
     @classmethod
     def load(cls, der_encoded_key: bytes):
         key = cls()
-        key._pub_key = serialization.load_der_public_key(
-            der_encoded_key, default_backend()
-        )
+        try:
+            key._pub_key = serialization.load_der_public_key(
+                der_encoded_key, default_backend()
+            )
+        except (cryptography_exceptions.UnsupportedAlgorithm, ValueError) as err:
+            # Apply fallback only for explicit EC parameter rejections.
+            if "explicit parameters" not in str(err).lower():
+                raise err
+
+            # cryptography>=47 may reject EC keys with explicit curve params.
+            explicit_ec_key = _load_explicit_ec_pubkey_with_runtime_supported_curves(der_encoded_key)
+            if explicit_ec_key is None:
+                raise err
+
+            key._pub_key = explicit_ec_key
         return key
 
     def dump(self):
@@ -128,10 +206,10 @@ class PublicKey:
     def isDsaKey(self) -> bool:
         return isinstance(self._pub_key, dsa.DSAPublicKey)
 
-    def isEcKey(self) ->bool:
+    def isEcKey(self) -> bool:
         return isinstance(self._pub_key, ecc.EllipticCurvePublicKey)
 
-    def isEdKey(self) ->bool:
+    def isEdKey(self) -> bool:
         return isinstance(self._pub_key, ed25519.Ed25519PublicKey)
 
     def isRsaKey(self) -> bool:
@@ -161,6 +239,7 @@ class PublicKey:
         class Verifier:
             def __init__(self, vf):
                 self._vf = vf
+
             def verify(self):
                 return self._vf()
 
@@ -177,34 +256,34 @@ class PublicKey:
                 mgf1_hash_algo = sig_algo_params['mask_gen_algorithm']['parameters']['algorithm'].native
                 mgf1_hash_algo = algo_utils.get_hash_algo_by_name(mgf1_hash_algo)
                 return Verifier(lambda:
-                    pub_key.verify(
-                        signature,
-                        message,
-                        padding.PSS(
-                            mgf = padding.MGF1(mgf1_hash_algo),
-                            salt_length = sig_algo_params['salt_length'].native
-                        ),
-                        hash_algo
-                ))
+                                pub_key.verify(
+                                    signature,
+                                    message,
+                                    padding.PSS(
+                                        mgf=padding.MGF1(mgf1_hash_algo),
+                                        salt_length=sig_algo_params['salt_length'].native
+                                    ),
+                                    hash_algo
+                                ))
             else:
                 return Verifier(lambda:
-                    pub_key.verify(signature, message, padding.PKCS1v15(), hash_algo)
-                )
+                                pub_key.verify(signature, message, padding.PKCS1v15(), hash_algo)
+                                )
 
         def get_ecdsa_verifier(pub_key: ecc.EllipticCurvePublicKey):
             return Verifier(lambda:
-                pub_key.verify(signature, message, ecc.ECDSA(hash_algo))
-            )
+                            pub_key.verify(signature, message, ecc.ECDSA(hash_algo))
+                            )
 
         def get_eddsa_verifier(pub_key: ed25519.Ed25519PublicKey):
             return Verifier(lambda:
-                pub_key.verify(signature, message)
-            )
+                            pub_key.verify(signature, message)
+                            )
 
         def get_dsa_verifier(pub_key: ecc.EllipticCurvePublicKey):
             return Verifier(lambda:
-                pub_key.verify(signature, message, hash_algo)
-            )
+                            pub_key.verify(signature, message, hash_algo)
+                            )
 
         # Get signature verifier
         if self.isRsaKey():
@@ -246,25 +325,3 @@ class AAPublicKey(PublicKey):
             return super().verifySignature(message, signature, sigAlgo)
         else:
             raise ValueError("Unsupported digital signature scheme")
-
-# Monkey patch _EllipticCurvePublicKey to allow unnamed curves (explicit params)
-from cryptography.hazmat.backends.openssl.ec import ( #pylint: disable=ungrouped-imports,wrong-import-position
-    _EllipticCurvePublicKey,
-    _mark_asn1_named_ec_curve,
-    _ec_key_curve_sn,
-    _sn_to_elliptic_curve
-)
-
-def _new_ec_pub_key_init(self, backend, ec_key_cdata, evp_pkey):
-    #pylint: disable=protected-access
-    self._backend  = backend
-    self._ec_key   = ec_key_cdata
-    self._evp_pkey = evp_pkey
-    try:
-        _mark_asn1_named_ec_curve(backend, ec_key_cdata)
-        sn = _ec_key_curve_sn(backend, ec_key_cdata)
-        self._curve = _sn_to_elliptic_curve(backend, sn)
-    except: #pylint: disable=bare-except
-        self._curve = None
-
-_EllipticCurvePublicKey.__init__ = _new_ec_pub_key_init
