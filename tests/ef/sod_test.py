@@ -10,6 +10,24 @@ from pymrtd.pki.x509 import DocumentSignerCertificate
 
 _dir = os.path.dirname(os.path.realpath(__file__))
 CERTS_DIR = py.path.local(_dir) /'..'/'pki'/'certs'
+DSC_CERT_FILES = sorted(
+    cert_name
+    for cert_name in os.listdir(str(CERTS_DIR))
+    if cert_name.lower().startswith("dsc_") and cert_name.lower().endswith(".cer")
+)
+
+
+@pytest.mark.parametrize("cert_name", DSC_CERT_FILES)
+def test_sod_all_dsc_certs_are_loadable(cert_name):
+    cert_path = CERTS_DIR / cert_name
+
+    with open(str(cert_path), "rb") as dsc_file:
+        cert_der = dsc_file.read()
+
+    dsc = DocumentSignerCertificate.load(cert_der)
+    assert dsc.dump() == cert_der
+    assert dsc.issuerCountry is not None
+    assert len(dsc.issuerCountry) == 2
 
 @pytest.mark.depends(on=[
     'tests/ef/ef_base_test.py::test_ef_base',

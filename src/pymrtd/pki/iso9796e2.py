@@ -4,8 +4,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from math import ceil
 
-__OPENSSL_RSA_NO_PADDING__ = 3 # https://github.com/openssl/openssl/blob/e40d538ad72c8e496b1dfe7d93c6002ce48351f5/include/openssl/rsa.h#L195
-
 class Dss1VerifierError(Exception):
     pass
 
@@ -76,44 +74,24 @@ class Dss1Verifier:
             raise Dss1VerifierError("Integrity check of recovered message failed")
         return M1
 
-    def _recover_F(self, sig: bytes):
+    def _recover_F(self, sig: bytes) -> bytes:
         """
         Decrypts RSA signature and returns representative message F.
-        Note: Implementation uses direct openssl interface of lib cryptography
+        Uses raw RSA public operation (no padding): F = sig^e mod n.
         TODO: Evaluate if signature opening function specified in ISO 9796-2 paragraph B.5 (A.5 in 2002 publ.) should be implemented.
               See ICAO 9303-11 p24.
         """
-        #pylint: disable=protected-access
-        backend = self._pub_key._backend
-        key = self._pub_key
-
-        init = backend._lib.EVP_PKEY_encrypt_init
-        crypt = backend._lib.EVP_PKEY_encrypt
-
-        pkey_ctx = backend._lib.EVP_PKEY_CTX_new(
-            key._evp_pkey, backend._ffi.NULL
-        )
-
-        backend.openssl_assert(pkey_ctx != backend._ffi.NULL)
-        pkey_ctx = backend._ffi.gc(pkey_ctx, backend._lib.EVP_PKEY_CTX_free)
-        res = init(pkey_ctx)
-        backend.openssl_assert(res == 1)
-        res = backend._lib.EVP_PKEY_CTX_set_rsa_padding(
-            pkey_ctx, __OPENSSL_RSA_NO_PADDING__
-        )
-
-        backend.openssl_assert(res > 0)
-        buf_size = backend._lib.EVP_PKEY_size(key._evp_pkey)
-        backend.openssl_assert(buf_size > 0)
-
-        outlen = backend._ffi.new("size_t *", buf_size)
-        buf = backend._ffi.new("unsigned char[]", buf_size)
-        res = crypt(pkey_ctx, buf, outlen, sig, len(sig))
-        if res <= 0:
-            backend._consume_errors()
+        key_size = (self._pub_key.key_size + 7) // 8
+        if len(sig) != key_size:
             raise Dss1VerifierError("Decrypting signature failed")
 
-        F = backend._ffi.buffer(buf)[:outlen[0]]
+        public_numbers = self._pub_key.public_numbers()
+        sig_int = int.from_bytes(sig, byteorder="big")
+        if sig_int >= public_numbers.n:
+            raise Dss1VerifierError("Decrypting signature failed")
+
+        msg_int = pow(sig_int, public_numbers.e, public_numbers.n)
+        F = msg_int.to_bytes(key_size, byteorder="big")
 
         # TODO: Verify OpenSSL performs following check specified in ISO 9796-2 paragraph B.7 (A.7 in 2002 publ.):
         #I = int.from_bytes(F, byteorder="big")
