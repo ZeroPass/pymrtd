@@ -10,12 +10,12 @@ from cryptography import exceptions as cryptography_exceptions
 
 from typing import Optional
 
-from pki import oids, algo_utils, iso9796e2
+from pymrtd.pki import oids, algo_utils, iso9796e2
 
 
 class SignatureAlgorithmId(algos.SignedDigestAlgorithmId):
     _map = dict(algos.SignedDigestAlgorithmId._map, **{
-        oids.ecdsa_plain_SHA1: 'sha1_plain_ecdsa',
+        oids.ecdsa_plain_SHA1:   'sha1_plain_ecdsa',
         oids.ecdsa_plain_SHA224: 'sha224_plain_ecdsa',
         oids.ecdsa_plain_SHA256: 'sha256_plain_ecdsa',
         oids.ecdsa_plain_SHA384: 'sha384_plain_ecdsa',
@@ -23,7 +23,7 @@ class SignatureAlgorithmId(algos.SignedDigestAlgorithmId):
     })
 
     _reverse_map = dict(algos.SignedDigestAlgorithmId._reverse_map, **{
-        'sha1_plain_ecdsa': oids.ecdsa_plain_SHA1,
+        'sha1_plain_ecdsa':   oids.ecdsa_plain_SHA1,
         'sha224_plain_ecdsa': oids.ecdsa_plain_SHA224,
         'sha256_plain_ecdsa': oids.ecdsa_plain_SHA256,
         'sha384_plain_ecdsa': oids.ecdsa_plain_SHA384,
@@ -48,7 +48,7 @@ class SignatureAlgorithm(algos.SignedDigestAlgorithm):
 
         algorithm = self['algorithm'].native
         algo_map = {
-            'sha1_plain_ecdsa': 'ecdsa',
+            'sha1_plain_ecdsa':   'ecdsa',
             'sha224_plain_ecdsa': 'ecdsa',
             'sha256_plain_ecdsa': 'ecdsa',
             'sha384_plain_ecdsa': 'ecdsa',
@@ -66,7 +66,7 @@ class SignatureAlgorithm(algos.SignedDigestAlgorithm):
 
         algorithm = self['algorithm'].native
         algo_map = {
-            'sha1_plain_ecdsa': 'sha1',
+            'sha1_plain_ecdsa':   'sha1',
             'sha224_plain_ecdsa': 'sha224',
             'sha256_plain_ecdsa': 'sha256',
             'sha384_plain_ecdsa': 'sha384',
